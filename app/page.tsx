@@ -20,48 +20,25 @@ type FacilityData = {
 };
 
 export default function Page() {
-  const [facilities, setFacilities] = useState<FacilityData[]>([]);
+  const [allFacilities, setAllFacilities] = useState<FacilityData[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const availableDates = useMemo(() => {
-    const allDates = new Set<string>();
-    facilities.forEach((facility) => {
-      facility.counts.forEach((count) => {
-        allDates.add(new Date(count.last_updated_at).toDateString());
-      });
-    });
-    return Array.from(allDates)
-      .map((dateStr) => new Date(dateStr))
-      .sort((a, b) => b.getTime() - a.getTime())
-      .slice(0, 7);
-  }, [facilities]);
-
-  // Set the most recent date as default when data is first loaded
-  useEffect(() => {
-    if (isInitialLoad && availableDates.length > 0) {
-      setSelectedDate(availableDates[0].toISOString());
-      setIsInitialLoad(false);
-    }
-  }, [availableDates, isInitialLoad]);
-
+  // Fetch all data once on mount
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        // On initial load, fetch all data to determine available dates
-        const dateParam = isInitialLoad ? "all" : selectedDate;
-        const response = await fetch(`/api/facilities?date=${dateParam}`);
+        const response = await fetch(`/api/facilities?date=all`);
         if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
-        setFacilities(data);
+        setAllFacilities(data);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -70,10 +47,42 @@ export default function Page() {
       }
     }
 
-    if (isInitialLoad || selectedDate) {
-      fetchData();
+    fetchData();
+  }, []);
+
+  // Compute available dates from all data
+  const availableDates = useMemo(() => {
+    const allDates = new Set<string>();
+    allFacilities.forEach((facility) => {
+      facility.counts.forEach((count) => {
+        allDates.add(new Date(count.last_updated_at).toDateString());
+      });
+    });
+    return Array.from(allDates)
+      .map((dateStr) => new Date(dateStr))
+      .sort((a, b) => b.getTime() - a.getTime())
+      .slice(0, 7);
+  }, [allFacilities]);
+
+  // Set the most recent date as default when data is first loaded
+  useEffect(() => {
+    if (!selectedDate && availableDates.length > 0) {
+      setSelectedDate(availableDates[0].toISOString());
     }
-  }, [selectedDate, isInitialLoad]);
+  }, [availableDates, selectedDate]);
+
+  // Filter facilities by selected date
+  const facilities = useMemo(() => {
+    if (!selectedDate) return allFacilities;
+
+    const filterDate = new Date(selectedDate).toDateString();
+    return allFacilities.map((facility) => ({
+      ...facility,
+      counts: facility.counts.filter((count) => {
+        return new Date(count.last_updated_at).toDateString() === filterDate;
+      }),
+    }));
+  }, [allFacilities, selectedDate]);
 
   // Group by facility
   const groupedFacilities = useMemo(() => {
