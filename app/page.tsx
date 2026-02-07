@@ -214,7 +214,7 @@ export default function Page() {
                         </div>
                         <div className="text-right ml-4">
                           <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
-                            Current Count
+                            Last Count
                           </div>
                           <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
                             {latestCount}
