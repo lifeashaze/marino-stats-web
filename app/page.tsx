@@ -21,32 +21,15 @@ type FacilityData = {
 
 export default function Page() {
   const [facilities, setFacilities] = useState<FacilityData[]>([]);
-  const [selectedDate, setSelectedDate] = useState("all");
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/facilities?date=${selectedDate}`);
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const data = await response.json();
-        setFacilities(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [selectedDate]);
 
   const availableDates = useMemo(() => {
     const allDates = new Set<string>();
@@ -60,6 +43,37 @@ export default function Page() {
       .sort((a, b) => b.getTime() - a.getTime())
       .slice(0, 7);
   }, [facilities]);
+
+  // Set the most recent date as default when data is first loaded
+  useEffect(() => {
+    if (isInitialLoad && availableDates.length > 0) {
+      setSelectedDate(availableDates[0].toISOString());
+      setIsInitialLoad(false);
+    }
+  }, [availableDates, isInitialLoad]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        // On initial load, fetch all data to determine available dates
+        const dateParam = isInitialLoad ? "all" : selectedDate;
+        const response = await fetch(`/api/facilities?date=${dateParam}`);
+        if (!response.ok) throw new Error("Failed to fetch data");
+        const data = await response.json();
+        setFacilities(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (isInitialLoad || selectedDate) {
+      fetchData();
+    }
+  }, [selectedDate, isInitialLoad]);
 
   // Group by facility
   const groupedFacilities = useMemo(() => {
@@ -101,29 +115,36 @@ export default function Page() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-neutral-100">
-                Marino Stats
+              <h1 className="text-2xl sm:text-4xl font-bold text-neutral-900 dark:text-neutral-100">
+                Northeastern Recreation Capacity Analytics
               </h1>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm mt-1">
-                Real-time facility capacity monitoring
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm mt-2">
+                Data source:{" "}
+                <a
+                  href="https://recreation.northeastern.edu/live-facility-counts/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-600 dark:text-amber-500 hover:underline"
+                >
+                  Northeastern Recreation Live Facility Counts
+                </a>
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <Select value={selectedDate} onValueChange={(value) => setSelectedDate(value || "all")}>
+              <Select value={selectedDate} onValueChange={(value) => setSelectedDate(value || "")}>
                 <SelectTrigger className="w-full sm:w-56 h-10 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
                   <SelectValue>
-                    {selectedDate === "all"
-                      ? "All Dates"
-                      : new Date(selectedDate).toLocaleDateString("en-US", {
+                    {selectedDate
+                      ? new Date(selectedDate).toLocaleDateString("en-US", {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
-                        })}
+                        })
+                      : "Select a date"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                  <SelectItem value="all">All Dates</SelectItem>
                   {availableDates.map((date) => (
                     <SelectItem key={date.toISOString()} value={date.toISOString()}>
                       {date.toLocaleDateString("en-US", {
@@ -192,6 +213,9 @@ export default function Page() {
                           </h3>
                         </div>
                         <div className="text-right ml-4">
+                          <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+                            Current Count
+                          </div>
                           <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
                             {latestCount}
                           </div>
