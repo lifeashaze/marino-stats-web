@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch all locations (db is guaranteed to be non-null here due to early return)
     const locationsResult = await db!.execute(`
-      SELECT location_id, location_name, facility_name
+      SELECT location_id, location_name, facility_name, total_capacity
       FROM locations
       ORDER BY facility_name, location_name
     `);
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       location_id: row.location_id as number,
       location_name: row.location_name as string,
       facility_name: row.facility_name as string | null,
+      total_capacity: row.total_capacity as number | null,
     }));
 
     // Fetch counts for each location

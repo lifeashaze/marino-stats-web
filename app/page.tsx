@@ -216,6 +216,42 @@ export default function Page() {
                     ? lastUpdated.toDateString() === new Date().toDateString()
                     : false;
 
+                  // Check if any data exceeds capacity
+                  const maxDataValue = chartData.length > 0
+                    ? Math.max(...chartData.map(d => d.count))
+                    : 0;
+
+                  const effectiveMax = location.total_capacity
+                    ? Math.max(location.total_capacity, maxDataValue)
+                    : maxDataValue;
+
+                  // Generate custom Y-axis ticks with more density in lower half
+                  const generateYAxisTicks = (maxCapacity: number) => {
+                    const midPoint = Math.floor(maxCapacity / 2);
+                    const ticks: number[] = [0];
+
+                    // Lower half: every 10 units
+                    for (let i = 10; i <= midPoint; i += 10) {
+                      ticks.push(i);
+                    }
+
+                    // Upper half: every 25 units
+                    for (let i = midPoint + 25; i < maxCapacity; i += 25) {
+                      ticks.push(i);
+                    }
+
+                    // Add the max value if not already included
+                    if (ticks[ticks.length - 1] !== maxCapacity) {
+                      ticks.push(maxCapacity);
+                    }
+
+                    return ticks;
+                  };
+
+                  const yAxisTicks = location.total_capacity
+                    ? generateYAxisTicks(effectiveMax)
+                    : undefined;
+
                   return (
                     <div
                       key={location.location_id}
@@ -284,7 +320,8 @@ export default function Page() {
                                 tickLine={false}
                                 axisLine={false}
                                 width={30}
-                                domain={location.total_capacity ? [0, location.total_capacity + 20] : undefined}
+                                domain={location.total_capacity ? [0, effectiveMax] : undefined}
+                                ticks={yAxisTicks}
                               />
                               <Tooltip
                                 contentStyle={{
