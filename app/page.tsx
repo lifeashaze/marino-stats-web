@@ -16,6 +16,7 @@ type FacilityData = {
   location_id: number;
   location_name: string;
   facility_name: string | null;
+  total_capacity?: number; // Optional for now, will be required once backend is updated
   counts: LocationCount[];
 };
 
@@ -210,6 +211,11 @@ export default function Page() {
                     ? new Date(location.counts[location.counts.length - 1].last_updated_at)
                     : null;
 
+                  // Check if last update was today
+                  const isToday = lastUpdated
+                    ? lastUpdated.toDateString() === new Date().toDateString()
+                    : false;
+
                   return (
                     <div
                       key={location.location_id}
@@ -220,24 +226,31 @@ export default function Page() {
                           <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
                             {location.location_name}
                           </h3>
-                        </div>
-                        <div className="text-right ml-4">
-                          <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
-                            Last Count
-                          </div>
-                          <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
-                            {latestCount}
-                          </div>
-                          {lastUpdated && (
+                          {location.total_capacity && (
                             <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                              {lastUpdated.toLocaleTimeString("en-US", {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                              })}
+                              Capacity: {location.total_capacity}
                             </div>
                           )}
                         </div>
+                        {isToday && (
+                          <div className="text-right ml-4">
+                            <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+                              Last Count
+                            </div>
+                            <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
+                              {latestCount}
+                            </div>
+                            {lastUpdated && (
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                                {lastUpdated.toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="h-40 -mx-2">
@@ -271,6 +284,7 @@ export default function Page() {
                                 tickLine={false}
                                 axisLine={false}
                                 width={30}
+                                domain={location.total_capacity ? [0, location.total_capacity + 20] : undefined}
                               />
                               <Tooltip
                                 contentStyle={{
