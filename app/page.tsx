@@ -100,7 +100,7 @@ export default function Page() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-amber-200 dark:border-amber-900 border-t-amber-600 dark:border-t-amber-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-neutral-200 dark:border-neutral-800 border-t-neutral-900 dark:border-t-neutral-100 rounded-full animate-spin" />
           <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading data...</p>
         </div>
       </div>
