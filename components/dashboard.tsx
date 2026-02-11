@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -224,8 +224,8 @@ export function Dashboard({ initialData }: DashboardProps) {
                     : "";
 
                   return (
-                    <>
-                      <div key={day} className="sticky left-0 bg-neutral-50 dark:bg-neutral-900/50 z-10 text-[8px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center justify-end gap-1.5 pr-2 font-medium whitespace-nowrap">
+                    <Fragment key={dayIdx}>
+                      <div className="sticky left-0 bg-neutral-50 dark:bg-neutral-900/50 z-10 text-[8px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center justify-end gap-1.5 pr-2 font-medium whitespace-nowrap">
                         <span className="hidden sm:inline">{dateStr}</span>
                         <span>{day}</span>
                       </div>
@@ -247,7 +247,7 @@ export function Dashboard({ initialData }: DashboardProps) {
                           />
                         );
                       })}
-                    </>
+                    </Fragment>
                   );
                 })}
               </div>
