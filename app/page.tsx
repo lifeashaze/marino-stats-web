@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { Dashboard } from "@/components/dashboard";
 
+// Force dynamic rendering - fetch fresh data on every request
+export const dynamic = 'force-dynamic';
+
 type LocationCount = {
   location_id: number;
   last_count: number;

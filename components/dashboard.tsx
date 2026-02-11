@@ -209,9 +209,12 @@ export function Dashboard({ initialData }: DashboardProps) {
                 <div className="sticky left-0 bg-neutral-50 dark:bg-neutral-900/50 z-10"></div>
                 {Array.from({ length: 20 }, (_, i) => {
                   const hour = i < 19 ? i + 5 : 0; // 5-23, then 0 (midnight)
+                  const hour12 = hour % 12 || 12;
+                  const ampm = hour >= 12 ? 'PM' : 'AM';
                   return (
                     <div key={i} className="text-[8px] sm:text-[10px] text-center text-neutral-400 dark:text-neutral-500 pb-0.5 sm:pb-1">
-                      {hour % 12 || 12}
+                      <span>{hour12}</span>
+                      <span className="hidden lg:inline text-[7px] sm:text-[8px] ml-0.5">{ampm}</span>
                     </div>
                   );
                 })}
