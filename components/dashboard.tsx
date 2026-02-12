@@ -36,6 +36,7 @@ const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function Dashboard({ initialData }: DashboardProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [heatmapLocationId, setHeatmapLocationId] = useState<number | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number; x: number; y: number } | null>(null);
 
   // Compute available dates from all data
   const availableDates = useMemo(() => {
@@ -241,12 +242,21 @@ export function Dashboard({ initialData }: DashboardProps) {
                         return (
                           <div
                             key={`${dayIdx}-${hour}`}
-                            className="h-6 sm:h-7 rounded-sm hover:ring-1 hover:ring-amber-500 transition-all cursor-pointer"
+                            className="h-6 sm:h-7 rounded-sm hover:ring-1 hover:ring-amber-500 transition-all cursor-pointer relative"
                             style={{
                               backgroundColor: getUtilizationColor(utilization),
                               opacity: opacity,
                             }}
-                            title={`${day} ${hour % 12 || 12}${hour >= 12 ? 'PM' : 'AM'} - ${Math.round(utilization)}% (${Math.round(cell?.value || 0)} people)`}
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setHoveredCell({
+                                day: dayIdx,
+                                hour: hour,
+                                x: rect.left + rect.width / 2,
+                                y: rect.top,
+                              });
+                            }}
+                            onMouseLeave={() => setHoveredCell(null)}
                           />
                         );
                       })}
@@ -255,6 +265,38 @@ export function Dashboard({ initialData }: DashboardProps) {
                 })}
               </div>
             </div>
+
+            {/* Heatmap Tooltip */}
+            {hoveredCell && (() => {
+              const cell = heatmapData.cells.find(
+                c => c.day === hoveredCell.day && c.hour === hoveredCell.hour
+              );
+              if (!cell) return null;
+
+              return (
+                <div
+                  className="fixed z-50 pointer-events-none"
+                  style={{
+                    left: `${hoveredCell.x}px`,
+                    top: `${hoveredCell.y - 10}px`,
+                    transform: 'translate(-50%, -100%)',
+                  }}
+                >
+                  <div className="bg-neutral-900 dark:bg-neutral-800 text-white px-3 py-2 rounded-lg shadow-lg border border-neutral-700 dark:border-neutral-600">
+                    <div className="text-xs font-medium mb-1">
+                      {DAYS_SHORT[hoveredCell.day]} {hoveredCell.hour % 12 || 12}
+                      {hoveredCell.hour >= 12 ? 'PM' : 'AM'}
+                    </div>
+                    <div className="text-sm font-bold text-amber-400">
+                      {Math.round(cell.utilization)}%
+                    </div>
+                    <div className="text-xs text-neutral-300 dark:text-neutral-400">
+                      {Math.round(cell.value)} people
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
