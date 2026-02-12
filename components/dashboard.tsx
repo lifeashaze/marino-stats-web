@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, Fragment } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CircularProgress } from "@/components/ui/circular-progress";
 
 type LocationCount = {
   location_id: number;
@@ -31,13 +32,9 @@ type DashboardProps = {
   initialData: FacilityData[];
 };
 
-const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function Dashboard({ initialData }: DashboardProps) {
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [heatmapLocationId, setHeatmapLocationId] = useState<number | null>(null);
-  const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number; x: number; y: number } | null>(null);
-
   // Compute available dates from all data
   const availableDates = useMemo(() => {
     const allDates = new Set<string>();
@@ -52,19 +49,14 @@ export function Dashboard({ initialData }: DashboardProps) {
       .slice(0, 7);
   }, [initialData]);
 
-  // Set the most recent date as default when data is first loaded
-  useEffect(() => {
-    if (!selectedDate && availableDates.length > 0) {
-      setSelectedDate(availableDates[0].toISOString());
-    }
-  }, [availableDates, selectedDate]);
-
-  // Set default heatmap location
-  useEffect(() => {
-    if (heatmapLocationId === null && initialData.length > 0) {
-      setHeatmapLocationId(initialData[0].location_id);
-    }
-  }, [heatmapLocationId, initialData]);
+  // Initialize with default values to avoid hydration mismatch
+  const [selectedDate, setSelectedDate] = useState<string>(() =>
+    availableDates.length > 0 ? availableDates[0].toISOString() : ""
+  );
+  const [heatmapLocationId, setHeatmapLocationId] = useState<number | null>(() =>
+    initialData.length > 0 ? initialData[0].location_id : null
+  );
+  const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number; x: number; y: number } | null>(null);
 
   // Calculate heatmap data for selected location
   const heatmapData = useMemo(() => {
@@ -77,7 +69,9 @@ export function Dashboard({ initialData }: DashboardProps) {
 
     location.counts.forEach(count => {
       const date = new Date(count.last_updated_at);
-      const day = date.getDay();
+      const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      // Convert to Mon=0, Tue=1, ..., Sun=6
+      const day = jsDay === 0 ? 6 : jsDay - 1;
       const hour = date.getHours();
       const key = `${day}-${hour}`;
       if (!heatmapMap[key]) heatmapMap[key] = [];
@@ -189,7 +183,7 @@ export function Dashboard({ initialData }: DashboardProps) {
                 value={heatmapLocationId?.toString() || ""}
                 onValueChange={(value) => value && setHeatmapLocationId(parseInt(value))}
               >
-                <SelectTrigger className="w-full sm:w-64 h-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                <SelectTrigger className="w-full sm:w-64 h-auto min-h-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 [&_*[data-slot=select-value]]:!line-clamp-none [&_*[data-slot=select-value]]:whitespace-normal">
                   <SelectValue>
                     {initialData.find(loc => loc.location_id === heatmapLocationId)?.location_name || "Select location"}
                   </SelectValue>
@@ -239,13 +233,19 @@ export function Dashboard({ initialData }: DashboardProps) {
                         const utilization = cell?.utilization || 0;
                         const opacity = Math.max(0.15, utilization / 100);
 
+                        // Show gray for cells with no data
+                        const hasData = cell !== undefined;
+                        const backgroundColor = hasData
+                          ? getUtilizationColor(utilization)
+                          : "rgb(163, 163, 163)"; // neutral gray
+
                         return (
                           <div
                             key={`${dayIdx}-${hour}`}
                             className="h-6 sm:h-7 rounded-sm hover:ring-1 hover:ring-amber-500 transition-all cursor-pointer relative"
                             style={{
-                              backgroundColor: getUtilizationColor(utilization),
-                              opacity: opacity,
+                              backgroundColor,
+                              opacity: hasData ? opacity : 0.15,
                             }}
                             onMouseEnter={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
@@ -414,8 +414,8 @@ export function Dashboard({ initialData }: DashboardProps) {
                       className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                        <div className="flex-1 pr-2">
+                          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
                             {location.location_name}
                           </h3>
                           {location.total_capacity && (
@@ -424,7 +424,32 @@ export function Dashboard({ initialData }: DashboardProps) {
                             </div>
                           )}
                         </div>
-                        {isToday && (
+                        {isToday && location.total_capacity && (
+                          <div className="text-right ml-4">
+                            <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+                              Last Count
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
+                                {latestCount}
+                              </div>
+                              <CircularProgress
+                                value={latestCount}
+                                max={location.total_capacity}
+                              />
+                            </div>
+                            {lastUpdated && (
+                              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                                {lastUpdated.toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {isToday && !location.total_capacity && (
                           <div className="text-right ml-4">
                             <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
                               Last Count
