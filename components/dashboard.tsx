@@ -403,7 +403,10 @@ export function Dashboard({ initialData }: DashboardProps) {
                     </div>
                     {cell ? (
                       <>
-                        <div className="text-sm font-bold text-amber-400">
+                        <div
+                          className="text-sm font-bold"
+                          style={{ color: getUtilizationColor(cell.utilization) }}
+                        >
                           {Math.round(cell.utilization)}%
                         </div>
                         <div className="text-xs text-neutral-300 dark:text-neutral-400">
