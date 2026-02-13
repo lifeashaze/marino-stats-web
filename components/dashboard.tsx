@@ -196,17 +196,16 @@ export function Dashboard({ initialData }: DashboardProps) {
     return groups;
   }, [facilities]);
 
-  const heatmapLocationGroups = useMemo(() => {
+  const heatmapLocationGroups = useMemo<Array<[string, FacilityData[]]>>(() => {
     const groups: { [key: string]: FacilityData[] } = {};
     initialData.forEach((location) => {
       const key = location.facility_name || "Other";
       if (!groups[key]) groups[key] = [];
       groups[key].push(location);
     });
-    return Object.entries(groups).map(([facilityName, locations]) => [
-      facilityName,
-      [...locations].sort(compareLocationsForDisplay),
-    ]);
+    return Object.entries(groups).map(([facilityName, locations]) => {
+      return [facilityName, [...locations].sort(compareLocationsForDisplay)];
+    });
   }, [initialData]);
 
   return (
