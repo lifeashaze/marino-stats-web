@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CircularProgress } from "@/components/ui/circular-progress";
 
@@ -26,6 +25,24 @@ type HeatmapCell = {
   hour: number;
   value: number;
   utilization: number;
+  latestAt: number;
+};
+
+type HeatmapDayDate = {
+  day: number;
+  date: Date;
+};
+
+type HeatmapData = {
+  cells: HeatmapCell[];
+  dayDates: HeatmapDayDate[];
+};
+
+type ChartPoint = {
+  time: number;
+  count: number;
+  timeLabel: string;
+  fullLabel: string;
 };
 
 type DashboardProps = {
@@ -33,6 +50,27 @@ type DashboardProps = {
 };
 
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const getCompactLocationName = (locationName: string) => {
+  const parts = locationName.split(/\s*-\s*/);
+  if (parts.length <= 1) return locationName;
+  const compact = parts.slice(1).join(" - ").trim();
+  return compact || locationName;
+};
+
+const getHeatmapLocationSortRank = (locationName: string) => {
+  const normalized = getCompactLocationName(locationName).toLowerCase();
+  if (normalized.includes("3rd floor")) return 0;
+  if (normalized.includes("1st floor")) return 1;
+  if (normalized.includes("2nd floor")) return 2;
+  return 3;
+};
+
+const compareLocationsForDisplay = (a: FacilityData, b: FacilityData) => {
+  const rankDiff = getHeatmapLocationSortRank(a.location_name) - getHeatmapLocationSortRank(b.location_name);
+  if (rankDiff !== 0) return rankDiff;
+  return getCompactLocationName(a.location_name).localeCompare(getCompactLocationName(b.location_name));
+};
 
 export function Dashboard({ initialData }: DashboardProps) {
   // Compute available dates from all data
@@ -46,7 +84,7 @@ export function Dashboard({ initialData }: DashboardProps) {
     return Array.from(allDates)
       .map((dateStr) => new Date(dateStr))
       .sort((a, b) => b.getTime() - a.getTime())
-      .slice(0, 7);
+      .slice(0, 8);
   }, [initialData]);
 
   // Initialize with default values to avoid hydration mismatch
@@ -59,23 +97,36 @@ export function Dashboard({ initialData }: DashboardProps) {
   const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number; x: number; y: number } | null>(null);
 
   // Calculate heatmap data for selected location
-  const heatmapData = useMemo(() => {
+  const heatmapData = useMemo<HeatmapData>(() => {
     const location = initialData.find(f => f.location_id === heatmapLocationId);
     if (!location) return { cells: [], dayDates: [] };
 
     const capacity = location.total_capacity || 100;
-    const heatmapMap: { [key: string]: number[] } = {};
+    const heatmapMap: { [key: string]: { values: number[]; latestAt: number } } = {};
     const dayDateMap: { [day: number]: Date } = {};
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
     location.counts.forEach(count => {
       const date = new Date(count.last_updated_at);
+      const timestamp = date.getTime();
+      if (Number.isNaN(timestamp) || timestamp >= todayStart) {
+        // Only use completed days in the heatmap; skip all of today's readings.
+        return;
+      }
+
       const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
       // Convert to Mon=0, Tue=1, ..., Sun=6
       const day = jsDay === 0 ? 6 : jsDay - 1;
       const hour = date.getHours();
       const key = `${day}-${hour}`;
-      if (!heatmapMap[key]) heatmapMap[key] = [];
-      heatmapMap[key].push(count.last_count);
+      if (!heatmapMap[key]) {
+        heatmapMap[key] = { values: [], latestAt: timestamp };
+      }
+      heatmapMap[key].values.push(count.last_count);
+      if (!Number.isNaN(timestamp)) {
+        heatmapMap[key].latestAt = Math.max(heatmapMap[key].latestAt, timestamp);
+      }
 
       // Keep track of the most recent date for each day of week
       if (!dayDateMap[day] || date > dayDateMap[day]) {
@@ -83,19 +134,20 @@ export function Dashboard({ initialData }: DashboardProps) {
       }
     });
 
-    const cells = Object.entries(heatmapMap).map(([key, values]) => {
+    const cells: HeatmapCell[] = Object.entries(heatmapMap).map(([key, bucket]) => {
       const [day, hour] = key.split("-").map(Number);
-      const avg = values.reduce((a, b) => a + b, 0) / values.length;
+      const avg = bucket.values.reduce((a, b) => a + b, 0) / bucket.values.length;
       return {
         day,
         hour,
         value: avg,
         utilization: (avg / capacity) * 100,
+        latestAt: bucket.latestAt,
       };
     });
 
-    const dayDates = Object.entries(dayDateMap).map(([day, date]) => ({
-      day: parseInt(day),
+    const dayDates: HeatmapDayDate[] = Object.entries(dayDateMap).map(([day, date]) => ({
+      day: parseInt(day, 10),
       date: date,
     }));
 
@@ -106,6 +158,15 @@ export function Dashboard({ initialData }: DashboardProps) {
     if (utilization < 40) return "rgb(34, 197, 94)";
     if (utilization < 70) return "rgb(234, 179, 8)";
     return "rgb(239, 68, 68)";
+  };
+
+  const formatChartTooltip = (
+    value: number | string,
+    _name: string | number,
+    item: unknown
+  ): [number | string, string] => {
+    const payload = (item as { payload?: { fullLabel?: string } } | undefined)?.payload;
+    return [value, payload?.fullLabel ?? ""];
   };
 
   // Filter facilities by selected date
@@ -129,20 +190,36 @@ export function Dashboard({ initialData }: DashboardProps) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(facility);
     });
+    Object.keys(groups).forEach((key) => {
+      groups[key] = [...groups[key]].sort(compareLocationsForDisplay);
+    });
     return groups;
   }, [facilities]);
+
+  const heatmapLocationGroups = useMemo(() => {
+    const groups: { [key: string]: FacilityData[] } = {};
+    initialData.forEach((location) => {
+      const key = location.facility_name || "Other";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(location);
+    });
+    return Object.entries(groups).map(([facilityName, locations]) => [
+      facilityName,
+      [...locations].sort(compareLocationsForDisplay),
+    ]);
+  }, [initialData]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-4xl font-bold text-neutral-900 dark:text-neutral-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm sm:text-3xl font-semibold leading-tight tracking-tight whitespace-nowrap text-neutral-900 dark:text-neutral-100">
                 Northeastern Recreation Capacity Analytics
               </h1>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm mt-2">
+              <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-2">
                 Data source:{" "}
                 <a
                   href="https://recreation.northeastern.edu/live-facility-counts/"
@@ -150,11 +227,13 @@ export function Dashboard({ initialData }: DashboardProps) {
                   rel="noopener noreferrer"
                   className="text-amber-600 dark:text-amber-500 hover:underline"
                 >
-                  Northeastern Recreation Live Facility Counts
+                  Live Facility Counts
                 </a>
               </p>
             </div>
-            <ThemeToggle />
+            <div className="shrink-0 pt-0.5">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
 
@@ -162,40 +241,68 @@ export function Dashboard({ initialData }: DashboardProps) {
         <div className="mb-6">
           <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3">
             <div className="flex flex-col gap-2 mb-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Traffic Heatmap</h3>
-                <div className="flex items-center gap-2 text-[10px] text-neutral-500 dark:text-neutral-400">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: "rgb(34, 197, 94)" }} />
-                    <span className="hidden sm:inline">Low</span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold tracking-tight text-neutral-800 dark:text-neutral-200">
+                    Traffic Heatmap
+                  </h3>
+                  <p className="mt-0.5 text-[10px] sm:text-[11px] text-neutral-500 dark:text-neutral-400">
+                    Historical hourly utilization for completed days only. Today&apos;s data appears after local midnight.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1 text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white/70 px-1.5 py-0.5 dark:bg-neutral-800/70">
+                    <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: "rgb(34, 197, 94)" }} />
+                    <span>Low</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: "rgb(234, 179, 8)" }} />
-                    <span className="hidden sm:inline">Med</span>
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white/70 px-1.5 py-0.5 dark:bg-neutral-800/70">
+                    <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: "rgb(234, 179, 8)" }} />
+                    <span>Med</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: "rgb(239, 68, 68)" }} />
-                    <span className="hidden sm:inline">High</span>
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white/70 px-1.5 py-0.5 dark:bg-neutral-800/70">
+                    <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: "rgb(239, 68, 68)" }} />
+                    <span>High</span>
                   </div>
                 </div>
               </div>
-              <Select
-                value={heatmapLocationId?.toString() || ""}
-                onValueChange={(value) => value && setHeatmapLocationId(parseInt(value))}
+              <div
+                role="radiogroup"
+                aria-label="Select heatmap location"
+                className="space-y-1.5"
               >
-                <SelectTrigger className="w-full sm:w-64 h-auto min-h-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 [&_*[data-slot=select-value]]:!line-clamp-none [&_*[data-slot=select-value]]:whitespace-normal">
-                  <SelectValue>
-                    {initialData.find(loc => loc.location_id === heatmapLocationId)?.location_name || "Select location"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                  {initialData.map((location) => (
-                    <SelectItem key={location.location_id} value={location.location_id.toString()}>
-                      {location.location_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {heatmapLocationGroups.map(([facilityName, locations]) => (
+                  <div key={facilityName}>
+                    <p className="mb-1 text-[9px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                      {facilityName}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {locations.map((location) => {
+                        const isSelected = heatmapLocationId === location.location_id;
+                        return (
+                          <button
+                            key={location.location_id}
+                            type="button"
+                            role="radio"
+                            aria-checked={isSelected}
+                            onClick={() => setHeatmapLocationId(location.location_id)}
+                            title={location.location_name}
+                            className={[
+                              "cursor-pointer rounded-full border px-2.5 py-1 text-[11px] sm:text-xs leading-4 font-medium transition-colors",
+                              isSelected
+                                ? "border-amber-300/80 bg-amber-100/80 text-amber-700 ring-1 ring-amber-300/60 dark:border-amber-500/60 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/50"
+                                : "border-neutral-300/80 bg-neutral-100/90 text-neutral-600 hover:border-neutral-400/80 hover:bg-neutral-200/80 hover:text-neutral-900 dark:border-neutral-700/80 dark:bg-neutral-800/70 dark:text-neutral-400 dark:hover:border-neutral-600/80 dark:hover:bg-neutral-700/70 dark:hover:text-neutral-200",
+                            ].join(" ")}
+                          >
+                            <span className="block max-w-[160px] truncate sm:max-w-[220px]">
+                              {getCompactLocationName(location.location_name)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -271,7 +378,6 @@ export function Dashboard({ initialData }: DashboardProps) {
               const cell = heatmapData.cells.find(
                 c => c.day === hoveredCell.day && c.hour === hoveredCell.hour
               );
-              if (!cell) return null;
 
               return (
                 <div
@@ -283,16 +389,33 @@ export function Dashboard({ initialData }: DashboardProps) {
                   }}
                 >
                   <div className="bg-neutral-900 dark:bg-neutral-800 text-white px-3 py-2 rounded-lg shadow-lg border border-neutral-700 dark:border-neutral-600">
+                    {cell?.latestAt && cell.latestAt > 0 && (
+                      <div className="text-[11px] text-neutral-300 dark:text-neutral-400 mb-0.5">
+                        {new Date(cell.latestAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                    )}
                     <div className="text-xs font-medium mb-1">
                       {DAYS_SHORT[hoveredCell.day]} {hoveredCell.hour % 12 || 12}
                       {hoveredCell.hour >= 12 ? 'PM' : 'AM'}
                     </div>
-                    <div className="text-sm font-bold text-amber-400">
-                      {Math.round(cell.utilization)}%
-                    </div>
-                    <div className="text-xs text-neutral-300 dark:text-neutral-400">
-                      {Math.round(cell.value)} people
-                    </div>
+                    {cell ? (
+                      <>
+                        <div className="text-sm font-bold text-amber-400">
+                          {Math.round(cell.utilization)}%
+                        </div>
+                        <div className="text-xs text-neutral-300 dark:text-neutral-400">
+                          {Math.round(cell.value)} people
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-neutral-300 dark:text-neutral-400">
+                        No data recorded for this time slot.
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -302,30 +425,40 @@ export function Dashboard({ initialData }: DashboardProps) {
 
         {/* Date Selector */}
         <div className="mb-8">
-          <Select value={selectedDate} onValueChange={(value) => setSelectedDate(value || "")}>
-            <SelectTrigger className="w-full sm:w-56 h-10 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-              <SelectValue>
-                {selectedDate
-                  ? new Date(selectedDate).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "Select a date"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-              {availableDates.map((date) => (
-                <SelectItem key={date.toISOString()} value={date.toISOString()}>
+          <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+            Pick one date to filter all facility charts. Data is limited to the most recent week plus today.
+          </p>
+          <div
+            role="radiogroup"
+            aria-label="Select date"
+            className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8"
+          >
+            {availableDates.map((date) => {
+              const isoDate = date.toISOString();
+              const isSelected = selectedDate === isoDate;
+              return (
+                <button
+                  key={isoDate}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => setSelectedDate(isoDate)}
+                  className={[
+                    "cursor-pointer w-full rounded-full px-3 py-1.5 text-center text-xs sm:text-sm font-medium transition-colors",
+                    isSelected
+                      ? "bg-amber-100/80 text-amber-700 ring-1 ring-amber-300/70 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/50"
+                      : "bg-neutral-100/80 text-neutral-600 hover:bg-neutral-200/80 hover:text-neutral-900 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:bg-neutral-700/70 dark:hover:text-neutral-200",
+                  ].join(" ")}
+                >
                   {date.toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
                     day: "numeric",
                   })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Facility Groups */}
@@ -344,7 +477,7 @@ export function Dashboard({ initialData }: DashboardProps) {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {locations.map((location) => {
-                  const chartData = location.counts
+                  const chartData: ChartPoint[] = location.counts
                     .map((count) => ({
                       time: new Date(count.last_updated_at).getTime(),
                       count: count.last_count,
@@ -514,10 +647,7 @@ export function Dashboard({ initialData }: DashboardProps) {
                                 }}
                                 labelStyle={{ display: "none" }}
                                 itemStyle={{ color: "rgb(217, 119, 6)", fontWeight: "600" }}
-                                formatter={(value: any, name: any, props: any) => [
-                                  value,
-                                  props.payload.fullLabel,
-                                ]}
+                                formatter={formatChartTooltip}
                               />
                               <Area
                                 type="monotone"
