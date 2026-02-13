@@ -9,8 +9,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Marino Stats | Real-Time Facility Analytics",
-  description: "Track facility capacity and trends in real-time",
+  title: {
+    default: "Marino Stats",
+    template: "%s | Marino Stats",
+  },
+  description:
+    "Live and historical recreation facility utilization analytics for Northeastern campus locations.",
+  applicationName: "Marino Stats",
+  keywords: [
+    "Marino",
+    "Northeastern Recreation",
+    "facility utilization",
+    "capacity analytics",
+    "gym occupancy",
+  ],
+  openGraph: {
+    title: "Marino Stats",
+    description:
+      "Live and historical recreation facility utilization analytics for Northeastern campus locations.",
+    type: "website",
+    siteName: "Marino Stats",
+  },
+  twitter: {
+    card: "summary",
+    title: "Marino Stats",
+    description:
+      "Live and historical recreation facility utilization analytics for Northeastern campus locations.",
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
