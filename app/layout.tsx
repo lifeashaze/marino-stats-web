@@ -22,13 +22,23 @@ export const metadata: Metadata = {
     "facility utilization",
     "capacity analytics",
     "gym occupancy",
+    "Northeastern University",
+    "recreation center",
+    "live stats",
   ],
+  authors: [{ name: "Marino Stats" }],
+  creator: "Marino Stats",
+  publisher: "Marino Stats",
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "Marino Stats",
     description:
       "Live and historical recreation facility utilization analytics for Northeastern campus locations.",
     type: "website",
     siteName: "Marino Stats",
+    locale: "en_US",
   },
   twitter: {
     card: "summary",
@@ -39,9 +49,18 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" },
     ],
     shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Marino Stats",
   },
 };
 
