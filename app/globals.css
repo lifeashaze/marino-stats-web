@@ -61,6 +61,13 @@
   --border: #e7e5e4;
   --card: #ffffff;
   --card-foreground: #0f0f0f;
+
+  /* Chart series (semester comparison) — chart-1 is the brand amber */
+  --chart-1: #d97706;
+  --chart-2: #0d9488;
+  --chart-3: #7c3aed;
+  --chart-4: #e11d48;
+  --chart-5: #16a34a;
 }
 
 .dark {
@@ -78,6 +85,12 @@
   --border: #292524;
   --card: #171717;
   --card-foreground: #fafafa;
+
+  --chart-1: #f59e0b;
+  --chart-2: #2dd4bf;
+  --chart-3: #a78bfa;
+  --chart-4: #fb7185;
+  --chart-5: #4ade80;
 }
 
 @layer base {
