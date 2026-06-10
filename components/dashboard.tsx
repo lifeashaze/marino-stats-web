@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SEMESTERS, weekOfSemester } from "@/lib/academic-calendar";
+import { nowET, type ETParts } from "@/lib/time";
 import type { DashboardData, LatestReading, Reading } from "@/lib/queries";
 import { Header } from "@/components/dashboard/header";
+import { GoNowSection } from "@/components/dashboard/go-now-section";
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { ZoneChartsSection } from "@/components/dashboard/zone-charts-section";
 import { HeatmapSection } from "@/components/dashboard/heatmap-section";
@@ -23,6 +25,15 @@ export function Dashboard({ data }: DashboardProps) {
   const [heatmapZoneId, setHeatmapZoneId] = useState<number | null>(
     () => zoneGroups[0]?.zones[0]?.locationId ?? null
   );
+
+  // Server-provided "now" keeps hydration consistent (the ISR HTML can be up
+  // to 5 min old); corrected on mount and ticked every minute thereafter.
+  const [now, setNow] = useState<ETParts>(data.serverNow);
+  useEffect(() => {
+    setNow(nowET());
+    const interval = setInterval(() => setNow(nowET()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Use the server's semester id so client and ISR-cached HTML agree.
   const semester = SEMESTERS.find((s) => s.id === data.currentSemesterId) ?? SEMESTERS[0];
@@ -51,6 +62,14 @@ export function Dashboard({ data }: DashboardProps) {
         <Header
           semesterLabel={semester.label}
           weekNumber={weekOfSemester(data.todayET, semester)}
+        />
+
+        <GoNowSection
+          zoneGroups={zoneGroups}
+          latestByZone={latestByZone}
+          baselineLookup={baselineLookup}
+          now={now}
+          todayET={data.todayET}
         />
 
         <DateSelector
