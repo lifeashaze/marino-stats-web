@@ -66,7 +66,7 @@ export function SemesterComparisonSection({
             ariaLabel="Select comparison location"
           />
           <div className="flex flex-wrap items-center gap-3">
-            {presentSemesters.map((s, i) => (
+            {presentSemesters.map((s) => (
               <div
                 key={s.id}
                 className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-400"

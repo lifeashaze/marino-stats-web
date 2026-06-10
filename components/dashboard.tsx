@@ -31,9 +31,13 @@ export function Dashboard({ data }: DashboardProps) {
   // to 5 min old); corrected on mount and ticked every minute thereafter.
   const [now, setNow] = useState<ETParts>(data.serverNow);
   useEffect(() => {
-    setNow(nowET());
-    const interval = setInterval(() => setNow(nowET()), 60_000);
-    return () => clearInterval(interval);
+    const update = () => setNow(nowET());
+    const timeout = setTimeout(update, 0); // correct the server-seeded clock just after hydration
+    const interval = setInterval(update, 60_000);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
   // Use the server's semester id so client and ISR-cached HTML agree.

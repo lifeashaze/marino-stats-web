@@ -16,13 +16,15 @@ Built to track and display historical occupancy trends across multiple recreatio
 
 ## Features
 
-- 📊 **Interactive Area Charts**: Visualize facility occupancy over time with gradient-filled area charts
+- 🚦 **"Right now" status**: Live count per zone with a quieter/typical/busier-than-usual verdict vs. the current semester's baseline for this hour
+- 🔮 **Rest-of-today forecast**: Dashed projection of how each zone will fill up, based on day-of-week patterns scaled by how today is tracking
+- 📊 **Interactive Area Charts**: Facility occupancy over time with gradient-filled area charts
 - 📅 **Date-Based Filtering**: View data for any of the last 7 days with a date selector
-- 📈 **Real-Time Stats**: Shows the most recent occupancy count for each location
+- 🗓️ **Semester-aware analytics**: Heatmap baselines scoped to the current semester; semester-vs-semester comparison charts; academic-calendar closure handling
 - 🏢 **Multi-Facility Support**: Organized by facility with all zones displayed per facility
 - 🌓 **Dark Mode**: Toggle between light and dark themes
 - 📱 **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
-- ⚡ **Optimized Loading**: Fetches all data once and filters client-side for instant responses
+- ⚡ **Optimized Loading**: SQL-side aggregation + ISR caching (~30 KB gzipped page); all filtering is instant and client-side
 
 ## How It Works
 
@@ -127,67 +129,31 @@ npm run lint
 
 ```
 ├── app/
-│   ├── api/
-│   │   └── facilities/
-│   │       └── route.ts      # API endpoint for fetching facility data
 │   ├── layout.tsx            # Root layout with font configuration
-│   ├── page.tsx              # Main dashboard with charts and filters
+│   ├── page.tsx              # Server component: ISR + single aggregated data fetch
 │   └── globals.css           # Global styles, CSS variables, and theming
 ├── components/
+│   ├── dashboard.tsx         # Client orchestrator (state + lookups)
+│   ├── dashboard/            # Page sections: go-now hero, charts, heatmap, comparison
 │   ├── ui/                   # shadcn/ui Base UI components
 │   └── theme-toggle.tsx      # Light/dark mode toggle
 ├── lib/
 │   ├── db.ts                 # Turso database client configuration
+│   ├── queries.ts            # SQL-side aggregation (the page's data contract)
+│   ├── time.ts               # Eastern-time helpers (see file header before touching dates)
+│   ├── academic-calendar.ts  # Semester boundaries, closures (edit yearly)
+│   ├── forecast.ts           # Rest-of-today forecast math
 │   └── utils.ts              # Utility functions (cn, etc.)
 └── public/                   # Static assets
 ```
 
-## API Endpoints
-
-### `GET /api/facilities`
-
-Fetches all locations with their occupancy count history.
-
-**Query Parameters:**
-- `date` (optional): Filter by specific date using ISO date string (e.g., `2024-01-15T00:00:00.000Z`) or `all` for all available dates
-
-**Example Requests:**
-```bash
-# Get all data for all dates
-GET /api/facilities?date=all
-
-# Get data for a specific date
-GET /api/facilities?date=2024-01-15T00:00:00.000Z
-```
-
-**Response Format:**
-```json
-[
-  {
-    "location_id": 1,
-    "location_name": "Marino Center - Cardio Area",
-    "facility_name": "Marino Center",
-    "counts": [
-      {
-        "location_id": 1,
-        "last_count": 42,
-        "last_updated_at": "2024-01-15T14:30:00Z",
-        "fetched_at": "2024-01-15T14:35:00Z"
-      }
-    ]
-  }
-]
-```
-
-**Notes:**
-- The API always returns all locations; filtering by date only affects the `counts` array for each location
-- If a location has no counts for the specified date, its `counts` array will be empty
+There are no public API endpoints — the page is the database's only consumer.
 
 ## Customization
 
 ### Modifying Charts
 
-The dashboard uses Recharts with AreaChart components. To customize chart appearance, edit the chart configuration in `app/page.tsx`:
+The dashboard uses Recharts. To customize chart appearance, edit `components/dashboard/zone-area-chart.tsx` (per-zone area charts + forecast overlay) and `components/dashboard/semester-comparison-section.tsx`:
 - Gradient colors (search for `linearGradient`)
 - Chart dimensions and margins
 - Tooltip styling
@@ -249,16 +215,17 @@ Cron Job (every 5 min) → Scraper → Parse HTML → Insert to Turso → Dashbo
 Want to use this for your own gym or facility? Here's what to modify:
 
 1. **Update the title and branding**:
-   - Edit `app/page.tsx` line 128-140 to change the header title and data source link
+   - Edit `components/dashboard/header.tsx` to change the header title and data source link
    - Update `app/layout.tsx` metadata (title, description)
 
 2. **Modify the data source**:
    - Build your own scraper for your facility's website
    - Adjust the database schema if needed (e.g., add capacity limits, facility types)
+   - Update `lib/academic-calendar.ts` with your institution's semester dates and closures
 
 3. **Customize the UI**:
-   - Chart colors: `app/page.tsx` (search for `linearGradient` and `stroke`)
-   - Layout: Modify the grid in `app/page.tsx` (currently 2-column on large screens)
+   - Chart colors: `components/dashboard/zone-area-chart.tsx` (search for `AMBER`)
+   - Layout: Modify the grids in `components/dashboard/*-section.tsx`
    - Theme colors: `app/globals.css` CSS variables
 
 ## Learn More
