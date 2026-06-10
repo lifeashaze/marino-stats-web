@@ -111,7 +111,9 @@ export function GoNowCard({ zone, status }: GoNowCardProps) {
           </div>
 
           <div className="mt-1 text-[11px] text-neutral-400 dark:text-neutral-500">
-            as of {formatTimeLabel(status.reading.recordedAt)}
+            {status.kind !== "stale" && status.isOld
+              ? `unchanged since ${formatTimeLabel(status.reading.recordedAt)}`
+              : `as of ${formatTimeLabel(status.reading.recordedAt)}`}
           </div>
         </>
       )}

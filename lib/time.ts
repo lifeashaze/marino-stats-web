@@ -41,10 +41,9 @@ const WEEKDAY_TO_NUM: Record<string, number> = {
   Sat: 6,
 };
 
-/** Current wall-clock time in Eastern time, regardless of runtime timezone. */
-export function nowET(): ETParts {
+function toETParts(date: Date): ETParts {
   const parts: Record<string, string> = {};
-  for (const p of ET_FORMAT.formatToParts(new Date())) {
+  for (const p of ET_FORMAT.formatToParts(date)) {
     parts[p.type] = p.value;
   }
   const year = Number(parts.year);
@@ -59,6 +58,11 @@ export function nowET(): ETParts {
     minute: Number(parts.minute),
     dayOfWeek: WEEKDAY_TO_NUM[parts.weekday],
   };
+}
+
+/** Current wall-clock time in Eastern time, regardless of runtime timezone. */
+export function nowET(): ETParts {
+  return toETParts(new Date());
 }
 
 /** Today's date in Eastern time as 'YYYY-MM-DD'. */
@@ -96,13 +100,24 @@ export function etToComparableMs(naive: string): number {
   return Date.parse(`${naive}Z`);
 }
 
-export function nowComparableMs(): number {
-  const n = nowET();
-  return Date.UTC(n.year, n.month - 1, n.day, n.hour, n.minute);
+export function comparableMsOf(parts: ETParts): number {
+  return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
 }
 
-export function minutesAgoET(naive: string): number {
-  return (nowComparableMs() - etToComparableMs(naive)) / 60_000;
+/**
+ * Minutes elapsed from a naive ET string to `now`. Callers pass the ticked
+ * `now` (seeded from serverNow) so server HTML and client hydration agree.
+ */
+export function minutesAgoET(naive: string, now: ETParts): number {
+  return (comparableMsOf(now) - etToComparableMs(naive)) / 60_000;
+}
+
+/**
+ * Comparable ms for a TRUE-UTC instant (trailing 'Z', e.g. `fetched_at`).
+ * Unlike naive ET strings, these are safe to hand to `new Date(...)`.
+ */
+export function utcToComparableMs(utcIso: string): number {
+  return comparableMsOf(toETParts(new Date(utcIso)));
 }
 
 /** Hour of day with minute fraction (16:30 → 16.5) from a naive ET string. */
