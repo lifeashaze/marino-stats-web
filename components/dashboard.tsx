@@ -9,6 +9,7 @@ import { GoNowSection } from "@/components/dashboard/go-now-section";
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { ZoneChartsSection } from "@/components/dashboard/zone-charts-section";
 import { HeatmapSection } from "@/components/dashboard/heatmap-section";
+import { SemesterComparisonSection } from "@/components/dashboard/semester-comparison-section";
 import { buildBaselineLookup, groupZonesByFacility } from "@/components/dashboard/zone-utils";
 
 type DashboardProps = {
@@ -56,6 +57,21 @@ export function Dashboard({ data }: DashboardProps) {
     return map;
   }, [data.recentReadings, selectedDate]);
 
+  const [comparisonZoneId, setComparisonZoneId] = useState<number | null>(
+    () => zoneGroups[0]?.zones[0]?.locationId ?? null
+  );
+
+  const semesterHourlyByZone = useMemo(() => {
+    const map = new Map<number, Map<string, Map<number, number>>>();
+    for (const s of data.semesterHourly) {
+      if (!map.has(s.locationId)) map.set(s.locationId, new Map());
+      const bySemester = map.get(s.locationId)!;
+      if (!bySemester.has(s.semesterId)) bySemester.set(s.semesterId, new Map());
+      bySemester.get(s.semesterId)!.set(s.hour, s.avgCount);
+    }
+    return map;
+  }, [data.semesterHourly]);
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -98,6 +114,15 @@ export function Dashboard({ data }: DashboardProps) {
             semester={semester}
           />
         </div>
+
+        <SemesterComparisonSection
+          zoneGroups={zoneGroups}
+          selectedZoneId={comparisonZoneId}
+          onSelectZone={setComparisonZoneId}
+          semesterHourlyByZone={semesterHourlyByZone}
+          semesters={SEMESTERS}
+          todayET={data.todayET}
+        />
 
         {data.zones.length === 0 && (
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-12 text-center">
