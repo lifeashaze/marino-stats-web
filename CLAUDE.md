@@ -4,119 +4,73 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js 16 web application for Marino stats, built with React 19, TypeScript, and Tailwind CSS 4. The project uses the App Router architecture and shadcn/ui components based on Base UI primitives.
+A Next.js 16 dashboard visualizing Northeastern University recreation facility occupancy over time (data scraped from recreation.northeastern.edu). Built with React 19, TypeScript, Tailwind CSS 4, Recharts, and Turso (libSQL).
+
+**This repo is visualization-only.** A separate, external process scrapes facility counts and writes them to the Turso database; this app only reads.
 
 ## Development Commands
 
 ```bash
-# Start development server (http://localhost:3000)
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Run linter
-npm run lint
+npm run dev      # Start development server (http://localhost:3000)
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
 ```
+
+There is no test suite.
 
 ## Architecture
 
-### Framework & Routing
-- **Next.js 16** with App Router (`app/` directory)
-- Server components by default; client components marked with `"use client"`
-- Root layout in `app/layout.tsx` configures fonts (Geist Sans, Geist Mono, Inter)
-- Main page is `app/page.tsx`
+### Data Flow (the big picture)
 
-### Component System
-- **UI components**: Located in `components/ui/` using Base UI primitives (`@base-ui/react`)
-- **shadcn/ui**: Configured with "base-nova" style variant (see `components.json`)
-- Components use `class-variance-authority` (CVA) for variant-based styling
-- Icons from `lucide-react`
+1. `app/page.tsx` is an **async server component** with `export const dynamic = 'force-dynamic'`. On every request it queries Turso directly (all locations + full count history per location) and passes the result as `initialData` to the client `Dashboard` component.
+2. `components/dashboard.tsx` (`"use client"`) does **all filtering client-side** with `useMemo` — no refetching when the user changes filters. It renders:
+   - A traffic heatmap (day-of-week × hour grid, 5 AM–midnight) of average utilization for a selected location. **Only completed days** are included; today's readings are intentionally excluded.
+   - A date selector covering the 8 most recent dates present in the data.
+   - Area charts (Recharts) per location, grouped by `facility_name`, with a "Last Count" + circular capacity gauge shown only when the latest reading is from today.
+3. The API routes under `app/api/` (`/api/facilities?date={iso|all}`, `/api/locations`) expose the same data over HTTP but are **not used by the dashboard** — it gets data via the server component.
 
-### Styling
-- **Tailwind CSS 4** with custom theme configuration
-- CSS variables for theming in `app/globals.css`
-- Dark mode support via `.dark` class
-- Color system uses OKLCH format
-- Custom utility function `cn()` in `lib/utils.ts` combines `clsx` and `tailwind-merge`
+### Database (Turso / libSQL)
 
-### Path Aliases
-TypeScript paths configured in `tsconfig.json`:
-- `@/*` maps to root directory
-- Common aliases: `@/components`, `@/lib/utils`, `@/components/ui`
+- Client in `lib/db.ts`, exported as `db` — **it is `null` when `TURSO_DB_URL`/`TURSO_AUTH_TOKEN` are unset** (so builds succeed without credentials). Always null-check `db` before use; API routes return 503 when it's null.
+- Shared row types (`Location`, `LocationCount`, `LocationWithCounts`) also live in `lib/db.ts`, though `page.tsx` and `dashboard.tsx` currently re-declare their own copies.
 
-### Component Patterns
-- UI components follow shadcn/ui conventions with compound component patterns
-- Components use TypeScript with proper type definitions
-- Variants managed through CVA for consistent styling APIs
-- Components support `className` prop for style overrides via `cn()` utility
+Schema:
 
-### Key Dependencies
-- `@base-ui/react`: Headless UI primitives
-- `class-variance-authority`: Variant-based component styling
-- `tailwind-merge`: Intelligent Tailwind class merging
-- `tw-animate-css`: Animation utilities
-- `next/font`: Automatic font optimization
+```sql
+locations (
+  location_id INTEGER PRIMARY KEY,
+  location_name TEXT NOT NULL,   -- e.g. "Marino Center - Cardio Area"
+  facility_name TEXT,            -- e.g. "Marino Center" (used for grouping)
+  total_capacity INTEGER         -- nullable; drives utilization % and gauges
+)
 
-## Configuration Files
-
-- `components.json`: shadcn/ui configuration (style: base-nova, base color: neutral)
-- `tsconfig.json`: TypeScript configuration with strict mode enabled
-- `eslint.config.mjs`: ESLint with Next.js presets for TypeScript
-- `next.config.ts`: Next.js configuration (currently minimal)
-- `postcss.config.mjs`: PostCSS configuration for Tailwind CSS 4
-
-## Database Setup
-
-### Turso Database
-The application uses Turso (libSQL) for data storage with the following schema:
-
-**locations table**:
-- `location_id` (INTEGER PRIMARY KEY)
-- `location_name` (TEXT NOT NULL)
-- `facility_name` (TEXT)
-
-**location_counts table**:
-- `location_id` (INTEGER NOT NULL)
-- `last_count` (INTEGER NOT NULL)
-- `last_updated_at` (TEXT NOT NULL)
-- `fetched_at` (TEXT NOT NULL)
-- PRIMARY KEY: (location_id, fetched_at)
+location_counts (
+  location_id INTEGER NOT NULL,
+  last_count INTEGER NOT NULL,   -- occupancy at this time
+  last_updated_at TEXT NOT NULL, -- when the count was recorded (ISO string)
+  fetched_at TEXT NOT NULL,      -- when the scraper fetched it
+  PRIMARY KEY (location_id, fetched_at)
+)
+```
 
 ### Environment Variables
-Create a `.env.local` file with:
+
+Create `.env.local` with:
+
 ```
-TURSO_DB_URL=your_turso_db_url_here
-TURSO_AUTH_TOKEN=your_turso_auth_token_here
+TURSO_DB_URL=...
+TURSO_AUTH_TOKEN=...
 ```
 
-### Database Access
-- Database client configured in `lib/db.ts`
-- API routes in `app/api/` handle database queries
-- Use the `db` client from `@/lib/db` for database operations
+### UI & Styling
 
-## Application Features
-
-### Dashboard
-The main page (`app/page.tsx`) displays:
-- Area charts showing facility counts over time grouped by facility
-- Real-time filtering by day of week (Monday-Sunday or All Days)
-- Current count and average count for each location
-- Responsive grid layout (1 column mobile, 2 tablet, 3 desktop)
-- Loading and error states
-
-### API Routes
-- `GET /api/facilities?dayOfWeek={day}`: Fetches all locations with their count history
-  - Optional `dayOfWeek` parameter filters by day (monday, tuesday, etc., or "all")
-  - Returns array of locations with their counts
+- **shadcn/ui** components in `components/ui/`, built on Base UI primitives (`@base-ui/react`) with the "base-nova" style (`components.json`). Variants via `class-variance-authority`; merge classes with `cn()` from `lib/utils.ts`.
+- **Tailwind CSS 4** with OKLCH CSS variables in `app/globals.css`; light/dark themes via the `.dark` class on `<html>`, toggled by `components/theme-toggle.tsx` (persisted in `localStorage`, falls back to `prefers-color-scheme`).
+- Font is Inter only (configured in `app/layout.tsx`, which also mounts Vercel Analytics).
+- Accent color is amber (`rgb(217, 119, 6)` for charts); heatmap utilization colors are green (<40%), yellow (<70%), red (≥70%).
+- Path alias `@/*` maps to the repo root (`@/components`, `@/lib/db`, etc.).
 
 ## Adding New UI Components
 
-When adding shadcn/ui components, they should be placed in `components/ui/` and follow the established patterns:
-- Use Base UI primitives as the foundation
-- Apply variants using CVA
-- Export component and variant types
-- Use the `cn()` utility for className merging
+Place shadcn/ui components in `components/ui/` following the existing patterns: Base UI primitives as the foundation, CVA for variants, `className` overrides merged with `cn()`.
