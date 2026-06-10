@@ -1,10 +1,11 @@
 "use client";
 
 import { isClosed } from "@/lib/academic-calendar";
-import { etHourFraction, formatTimeLabel } from "@/lib/time";
+import { buildForecast } from "@/lib/forecast";
+import { etHourFraction, formatHourLabel, formatTimeLabel, type ETParts } from "@/lib/time";
 import type { LatestReading, Reading } from "@/lib/queries";
 import { ZoneAreaChart, type ChartPoint } from "@/components/dashboard/zone-area-chart";
-import type { ZoneGroup } from "@/components/dashboard/zone-utils";
+import type { BaselineLookup, ZoneGroup } from "@/components/dashboard/zone-utils";
 
 type ZoneChartsSectionProps = {
   zoneGroups: ZoneGroup[];
@@ -12,6 +13,8 @@ type ZoneChartsSectionProps = {
   selectedDate: string;
   todayET: string;
   latestByZone: Map<number, LatestReading>;
+  baselineLookup: BaselineLookup;
+  now: ETParts;
 };
 
 export function ZoneChartsSection({
@@ -20,6 +23,8 @@ export function ZoneChartsSection({
   selectedDate,
   todayET,
   latestByZone,
+  baselineLookup,
+  now,
 }: ZoneChartsSectionProps) {
   const isToday = selectedDate === todayET;
 
@@ -45,6 +50,34 @@ export function ZoneChartsSection({
                 count: r.count,
                 label: formatTimeLabel(r.recordedAt),
               }));
+
+              if (isToday && points.length > 0) {
+                const dayBaselines = baselineLookup.get(zone.locationId)?.get(now.dayOfWeek);
+                const baselineByHour = new Map<number, number>();
+                for (const [hour, cell] of dayBaselines ?? []) baselineByHour.set(hour, cell.avg);
+
+                const forecast = buildForecast({
+                  todayPoints: points.map((p) => ({
+                    hourFraction: p.hourFraction,
+                    count: p.count!,
+                  })),
+                  baselineByHour,
+                  nowHourFraction: now.hour + now.minute / 60,
+                });
+
+                if (forecast) {
+                  // Bridge point so the dashed line connects to the last actual.
+                  const last = points[points.length - 1];
+                  last.forecast = last.count;
+                  for (const fp of forecast.points) {
+                    points.push({
+                      hourFraction: fp.hourFraction,
+                      forecast: fp.forecast,
+                      label: `${formatHourLabel(fp.hourFraction)} (expected)`,
+                    });
+                  }
+                }
+              }
 
               return (
                 <ZoneAreaChart

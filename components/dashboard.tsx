@@ -85,6 +85,8 @@ export function Dashboard({ data }: DashboardProps) {
           selectedDate={selectedDate}
           todayET={data.todayET}
           latestByZone={latestByZone}
+          baselineLookup={baselineLookup}
+          now={now}
         />
 
         <div className="mt-8">
