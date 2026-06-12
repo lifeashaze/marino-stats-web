@@ -18,9 +18,10 @@ type HeatmapSectionProps = {
 };
 
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-// Columns: 5 AM–11 PM, then midnight. Hour-0 readings carry the *next* day's
-// date/dow, so the midnight cell at the end of row X is X's 12 AM close-out.
+// Display the operating-day window from 5 AM through midnight.
 const HOURS = [...Array.from({ length: 19 }, (_, i) => i + 5), 0];
+const MARINO = "Marino Recreation Center";
+const SUNDAY_OPEN_HOUR = 12;
 
 type HoveredCell = { rowIdx: number; hour: number; x: number; y: number };
 
@@ -43,8 +44,17 @@ export function HeatmapSection({
   const closedRuleForRow = (rowIdx: number) =>
     isClosedOnDayOfWeek(selectedZone?.facilityName ?? null, semester, (rowIdx + 1) % 7);
 
-  const cellFor = (rowIdx: number, hour: number) =>
-    zoneBaselines?.get((rowIdx + 1) % 7)?.get(hour);
+  const cellFor = (rowIdx: number, hour: number) => {
+    const dayOfWeek = (rowIdx + 1) % 7;
+    if (
+      selectedZone?.facilityName === MARINO &&
+      dayOfWeek === 0 &&
+      hour < SUNDAY_OPEN_HOUR
+    ) {
+      return undefined;
+    }
+    return zoneBaselines?.get(dayOfWeek)?.get(hour);
+  };
 
   return (
     <div className="mb-6">
