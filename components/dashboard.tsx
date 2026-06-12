@@ -103,14 +103,18 @@ export function Dashboard({ initialData }: DashboardProps) {
 
     const capacity = location.total_capacity || 100;
     const heatmapMap: { [key: string]: { values: number[]; latestAt: number } } = {};
-    const dayDateMap: { [day: number]: Date } = {};
+    const dayDateMap: { [day: number]: { dateKey: string; date: Date } } = {};
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todayKey = [
+      now.getFullYear(),
+      (now.getMonth() + 1).toString().padStart(2, "0"),
+      now.getDate().toString().padStart(2, "0"),
+    ].join("-");
 
     location.counts.forEach(count => {
-      const date = new Date(count.last_updated_at);
-      const timestamp = date.getTime();
-      if (Number.isNaN(timestamp) || timestamp >= todayStart) {
+      const dateKey = count.last_updated_at.slice(0, 10);
+      const date = new Date(`${dateKey}T12:00:00`);
+      if (Number.isNaN(date.getTime()) || dateKey >= todayKey) {
         // Only use completed days in the heatmap; skip all of today's readings.
         return;
       }
@@ -118,7 +122,24 @@ export function Dashboard({ initialData }: DashboardProps) {
       const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
       // Convert to Mon=0, Tue=1, ..., Sun=6
       const day = jsDay === 0 ? 6 : jsDay - 1;
-      const hour = date.getHours();
+
+      // Each row represents only the latest completed date for that weekday.
+      if (!dayDateMap[day] || dateKey > dayDateMap[day].dateKey) {
+        dayDateMap[day] = { dateKey, date };
+      }
+    });
+
+    location.counts.forEach(count => {
+      const dateKey = count.last_updated_at.slice(0, 10);
+      const date = new Date(`${dateKey}T12:00:00`);
+      if (Number.isNaN(date.getTime())) return;
+
+      const jsDay = date.getDay();
+      const day = jsDay === 0 ? 6 : jsDay - 1;
+      if (dayDateMap[day]?.dateKey !== dateKey) return;
+
+      const hour = Number(count.last_updated_at.slice(11, 13));
+      const timestamp = Date.parse(`${count.last_updated_at}Z`);
       const key = `${day}-${hour}`;
       if (!heatmapMap[key]) {
         heatmapMap[key] = { values: [], latestAt: timestamp };
@@ -126,11 +147,6 @@ export function Dashboard({ initialData }: DashboardProps) {
       heatmapMap[key].values.push(count.last_count);
       if (!Number.isNaN(timestamp)) {
         heatmapMap[key].latestAt = Math.max(heatmapMap[key].latestAt, timestamp);
-      }
-
-      // Keep track of the most recent date for each day of week
-      if (!dayDateMap[day] || date > dayDateMap[day]) {
-        dayDateMap[day] = date;
       }
     });
 
@@ -146,7 +162,7 @@ export function Dashboard({ initialData }: DashboardProps) {
       };
     });
 
-    const dayDates: HeatmapDayDate[] = Object.entries(dayDateMap).map(([day, date]) => ({
+    const dayDates: HeatmapDayDate[] = Object.entries(dayDateMap).map(([day, { date }]) => ({
       day: parseInt(day, 10),
       date: date,
     }));
