@@ -4,12 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Pin, Sparkles, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-type HeaderProps = {
-  semesterLabel: string;
-  weekNumber: number;
-};
-
-export function Header({ semesterLabel, weekNumber }: HeaderProps) {
+export function Header() {
   const [showFeatures, setShowFeatures] = useState(false);
   const titleId = useId();
   const descriptionId = useId();
@@ -29,14 +24,9 @@ export function Header({ semesterLabel, weekNumber }: HeaderProps) {
     <div className="mb-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-sm sm:text-3xl font-semibold leading-tight tracking-tight whitespace-nowrap text-neutral-900 dark:text-neutral-100">
-              Northeastern Recreation Capacity Analytics
-            </h1>
-            <span className="inline-flex items-center rounded-full bg-amber-100/80 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-300/60 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/50 sm:text-xs">
-              {semesterLabel} · Week {weekNumber}
-            </span>
-          </div>
+          <h1 className="text-sm sm:text-3xl font-semibold leading-tight tracking-tight whitespace-nowrap text-neutral-900 dark:text-neutral-100">
+            Northeastern Recreation Capacity Analytics
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
               Data source:{" "}
@@ -52,7 +42,7 @@ export function Header({ semesterLabel, weekNumber }: HeaderProps) {
             <button
               type="button"
               onClick={() => setShowFeatures(true)}
-              className="inline-flex cursor-pointer items-center rounded-full bg-amber-100/80 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-300/60 transition-colors hover:bg-amber-200/80 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 sm:text-sm"
+              className="cursor-pointer text-xs font-medium text-amber-700 underline underline-offset-4 transition-colors hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 sm:text-sm"
             >
               what&apos;s new?
             </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SEMESTERS, weekOfSemester } from "@/lib/academic-calendar";
+import { SEMESTERS } from "@/lib/academic-calendar";
 import { nowET, type ETParts } from "@/lib/time";
 import type { DashboardData, LatestReading, Reading } from "@/lib/queries";
 import { Header } from "@/components/dashboard/header";
@@ -125,10 +125,7 @@ export function Dashboard({ data }: DashboardProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <Header
-          semesterLabel={semester.label}
-          weekNumber={weekOfSemester(data.todayET, semester)}
-        />
+        <Header />
 
         <HeatmapSection
           zoneGroups={zoneGroups}
