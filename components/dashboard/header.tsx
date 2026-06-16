@@ -96,17 +96,6 @@ export function Header() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                <span className="rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-950 dark:ring-neutral-800">
-                  3 updates
-                </span>
-                <span className="rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-950 dark:ring-neutral-800">
-                  Local pins
-                </span>
-                <span className="rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-neutral-200 dark:bg-neutral-950 dark:ring-neutral-800">
-                  Better comparisons
-                </span>
-              </div>
             </div>
 
             <div className="p-5">
