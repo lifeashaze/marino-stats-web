@@ -24,22 +24,20 @@ There is no test suite. Spot-check data-layer changes with throwaway scripts: `n
 - **Rows are inserted only when a count changes upstream** (upstream updates each zone every ~35 min in summer; gaps >45 min are routine). An old `last_updated_at` means "unchanged", not "scraper down" — pipeline liveness is judged by `MAX(fetched_at)` across all zones (longest healthy open-hours silence observed: 50 min).
 - Counts can legitimately exceed `total_capacity` — display true utilization (>100% allowed); only color scales/gauges saturate at 100%. Never clamp the numbers.
 - Zero-data days are usually real closures, not scraper bugs (snowstorms, holidays, SquashBusters weekend closures during breaks/summer) — they're modeled in `lib/academic-calendar.ts`, which needs a yearly edit when NEU publishes dates.
-- Studios A/B (location_ids 9531/9532) are class-driven; busy/quiet verdicts are suppressed for them (`CLASS_DRIVEN_LOCATION_IDS` in `components/dashboard/zone-utils.ts`).
 
 ## Architecture
 
 ### Data flow
 
 1. `app/page.tsx` is a server component with **ISR (`revalidate = 300`)** — the scraper polls every ~10 min, so 5-min cached HTML is always fresh enough. It calls `getDashboardData()` and renders a `SetupNotice` if the db env is missing (`db` from `lib/db.ts` is **null** when `TURSO_DB_URL`/`TURSO_AUTH_TOKEN` are unset, so builds succeed without credentials).
-2. `lib/queries.ts` builds the whole payload in **one `db.batch(..., "read")` roundtrip**: zones, last-8-days readings (deduped), current-semester hourly baselines (per zone × day-of-week × hour, excluding today and closures), per-semester hour-of-day averages, and latest reading per zone. ~200 KB JSON; the `DashboardData` type is the page's data contract.
+2. `lib/queries.ts` builds the payload in **one `db.batch(..., "read")` roundtrip**: zones, last-8-days readings, current-semester hourly baselines for forecasts, per-semester hour-of-day averages, and latest reading per zone.
 3. `components/dashboard.tsx` (`"use client"`) is a thin orchestrator: state (`selectedDate`, heatmap/comparison zone ids, a 60-second `now` ticker seeded from `data.serverNow` for hydration safety) plus `useMemo` lookups, feeding the section components in `components/dashboard/`.
 
 ### Page sections (top to bottom)
 
 - `header.tsx` — title + semester badge ("Summer 2026 · Week 6").
-- `go-now-section.tsx`/`go-now-card.tsx` — live per-zone status: count, gauge, verdict vs the semester baseline for the current day-of-week+hour (quieter <75%, busier >125%, suppressed when baseline avg < 2; closed via calendar). Readings >45 min old keep their verdict with an "unchanged since" note; the greyed "No recent reading" state is reserved for pipeline silence (no insert in any zone for >60 min) or a reading from a prior day.
 - `date-selector.tsx` + `zone-charts-section.tsx`/`zone-area-chart.tsx` — per-zone area charts on a numeric ET-hour X axis; today's chart appends a dashed rest-of-day forecast (`lib/forecast.ts`: day-of-week baseline × clamped today-so-far trend factor).
-- `heatmap-section.tsx` — day×hour grid from the server-computed baselines (no client recomputation); weekend closures render striped "Closed" cells.
+- `heatmap-section.tsx` — day×hour grid where each weekday row comes from one latest completed date, preventing missing slots from falling back to older weeks; weekend closures render striped "Closed" cells.
 - `semester-comparison-section.tsx` — avg occupancy by hour, one line per semester with data; future semesters appear automatically.
 
 ### Domain libs

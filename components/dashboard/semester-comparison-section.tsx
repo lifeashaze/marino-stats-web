@@ -8,9 +8,15 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipProps,
 } from "recharts";
 import type { Semester } from "@/lib/academic-calendar";
 import { formatHourLabel } from "@/lib/time";
+import {
+  ChartTooltip,
+  CHART_TOOLTIP_CURSOR,
+  CHART_TOOLTIP_WRAPPER_STYLE,
+} from "@/components/dashboard/chart-tooltip";
 import { ZoneChipGroup } from "@/components/dashboard/zone-chip-group";
 import type { ZoneGroup } from "@/components/dashboard/zone-utils";
 
@@ -21,10 +27,56 @@ type SemesterComparisonSectionProps = {
   /** zone → semesterId → hour → avgCount */
   semesterHourlyByZone: Map<number, Map<string, Map<number, number>>>;
   semesters: Semester[]; // configured order → stable colors
-  todayET: string;
 };
 
 const OPEN_HOURS = Array.from({ length: 19 }, (_, i) => i + 5); // 5 AM - 11 PM
+const AVERAGE_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+
+type SemesterComparisonTooltipProps = {
+  active?: boolean;
+  label?: number | string;
+  payload?: TooltipProps<number, string>["payload"];
+  presentSemesters: Semester[];
+  semesters: Semester[];
+};
+
+function semesterColor(semesterId: string, semesters: Semester[]) {
+  const index = semesters.findIndex((semester) => semester.id === semesterId);
+  return `var(--chart-${((index >= 0 ? index : 0) % 5) + 1})`;
+}
+
+function SemesterComparisonTooltip({
+  active,
+  label,
+  payload,
+  presentSemesters,
+  semesters,
+}: SemesterComparisonTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  const semesterById = new Map(presentSemesters.map((semester) => [semester.id, semester]));
+  const rows = payload
+    .filter((item) => typeof item.value === "number" && typeof item.name === "string")
+    .sort((a, b) => Number(b.value) - Number(a.value))
+    .map((item) => {
+      const semesterId = String(item.name);
+      return {
+        key: semesterId,
+        label: semesterById.get(semesterId)?.label ?? semesterId,
+        value: AVERAGE_FORMATTER.format(Number(item.value)),
+        unit: "people",
+        color: semesterColor(semesterId, semesters),
+      };
+    });
+
+  return (
+    <ChartTooltip
+      title={formatHourLabel(Number(label))}
+      subtitle="Average occupancy"
+      rows={rows}
+    />
+  );
+}
 
 export function SemesterComparisonSection({
   zoneGroups,
@@ -32,7 +84,6 @@ export function SemesterComparisonSection({
   onSelectZone,
   semesterHourlyByZone,
   semesters,
-  todayET,
 }: SemesterComparisonSectionProps) {
   const zoneData = selectedZoneId != null ? semesterHourlyByZone.get(selectedZoneId) : undefined;
   const presentSemesters = semesters.filter((s) => zoneData?.has(s.id));
@@ -76,7 +127,6 @@ export function SemesterComparisonSection({
                   style={{ backgroundColor: `var(--chart-${(semesters.indexOf(s) % 5) + 1})` }}
                 />
                 {s.label}
-                {s.end >= todayET && <span className="text-neutral-400">(in progress)</span>}
               </div>
             ))}
           </div>
@@ -113,18 +163,16 @@ export function SemesterComparisonSection({
                   width={30}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgb(255, 255, 255)",
-                    border: "1px solid rgb(229, 229, 229)",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                  }}
-                  labelFormatter={(h) => formatHourLabel(Number(h))}
-                  formatter={(value: number | string, name: string | number) => {
-                    const semester = presentSemesters.find((s) => s.id === name);
-                    return [`${value} people avg`, semester?.label ?? String(name)];
-                  }}
+                  content={
+                    <SemesterComparisonTooltip
+                      presentSemesters={presentSemesters}
+                      semesters={semesters}
+                    />
+                  }
+                  cursor={CHART_TOOLTIP_CURSOR}
+                  wrapperStyle={CHART_TOOLTIP_WRAPPER_STYLE}
+                  offset={12}
+                  animationDuration={100}
                 />
                 {presentSemesters.map((s) => (
                   <Line
@@ -134,6 +182,12 @@ export function SemesterComparisonSection({
                     stroke={`var(--chart-${(semesters.indexOf(s) % 5) + 1})`}
                     strokeWidth={2}
                     dot={false}
+                    activeDot={{
+                      r: 4,
+                      fill: semesterColor(s.id, semesters),
+                      stroke: "var(--card)",
+                      strokeWidth: 2,
+                    }}
                     connectNulls
                   />
                 ))}

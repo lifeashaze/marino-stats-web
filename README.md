@@ -16,11 +16,11 @@ Built to track and display historical occupancy trends across multiple recreatio
 
 ## Features
 
-- 🚦 **"Right now" status**: Live count per zone with a quieter/typical/busier-than-usual verdict vs. the current semester's baseline for this hour
 - 🔮 **Rest-of-today forecast**: Dashed projection of how each zone will fill up, based on day-of-week patterns scaled by how today is tracking
 - 📊 **Interactive Area Charts**: Facility occupancy over time with gradient-filled area charts
-- 📅 **Date-Based Filtering**: View data for any of the last 7 days with a date selector
-- 🗓️ **Semester-aware analytics**: Heatmap baselines scoped to the current semester; semester-vs-semester comparison charts; academic-calendar closure handling
+- 📅 **Date-Based Filtering**: View charts for the most recent week plus today
+- ⭐ **Local Favorites**: Pin frequently visited zones to the top of the chart list; preferences stay in the browser
+- 🗓️ **Weekday analytics**: Heatmap rows use one latest completed date per weekday; semester-vs-semester comparison charts; academic-calendar closure handling
 - 🏢 **Multi-Facility Support**: Organized by facility with all zones displayed per facility
 - 🌓 **Dark Mode**: Toggle between light and dark themes
 - 📱 **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
@@ -134,7 +134,7 @@ npm run lint
 │   └── globals.css           # Global styles, CSS variables, and theming
 ├── components/
 │   ├── dashboard.tsx         # Client orchestrator (state + lookups)
-│   ├── dashboard/            # Page sections: go-now hero, charts, heatmap, comparison
+│   ├── dashboard/            # Page sections: charts, heatmap, comparison
 │   ├── ui/                   # shadcn/ui Base UI components
 │   └── theme-toggle.tsx      # Light/dark mode toggle
 ├── lib/

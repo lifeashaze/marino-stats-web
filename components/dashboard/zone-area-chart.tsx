@@ -8,8 +8,15 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipProps,
 } from "recharts";
+import { Star } from "lucide-react";
 import { CircularProgress } from "@/components/ui/circular-progress";
+import {
+  ChartTooltip,
+  CHART_TOOLTIP_CURSOR,
+  CHART_TOOLTIP_WRAPPER_STYLE,
+} from "@/components/dashboard/chart-tooltip";
 import { formatHourLabel, formatTimeLabel } from "@/lib/time";
 import type { LatestReading, Zone } from "@/lib/queries";
 
@@ -17,6 +24,7 @@ export type ChartPoint = {
   hourFraction: number;
   count?: number;
   forecast?: number;
+  forecastBridge?: boolean;
   label: string;
 };
 
@@ -26,11 +34,50 @@ type ZoneAreaChartProps = {
   isToday: boolean;
   latest?: LatestReading;
   closedReason?: string | null;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 };
 
 const AMBER = "rgb(217, 119, 6)";
+const COUNT_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 
-export function ZoneAreaChart({ zone, points, isToday, latest, closedReason }: ZoneAreaChartProps) {
+type ZoneAreaTooltipProps = {
+  active?: boolean;
+  payload?: TooltipProps<number, string>["payload"];
+};
+
+function ZoneAreaTooltip({ active, payload }: ZoneAreaTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  const point = payload[0]?.payload as ChartPoint | undefined;
+  const title = String(point?.label ?? "");
+  const rows = payload
+    .filter(
+      (item) =>
+        typeof item.value === "number" &&
+        typeof item.name === "string" &&
+        !(point?.forecastBridge && item.name === "forecast")
+    )
+    .map((item) => ({
+      key: String(item.name),
+      label: item.name === "forecast" ? "Forecast" : "Actual",
+      value: COUNT_FORMATTER.format(Number(item.value)),
+      unit: "people",
+      color: AMBER,
+    }));
+
+  return <ChartTooltip title={title} subtitle="Occupancy" rows={rows} />;
+}
+
+export function ZoneAreaChart({
+  zone,
+  points,
+  isToday,
+  latest,
+  closedReason,
+  isFavorite,
+  onToggleFavorite,
+}: ZoneAreaChartProps) {
   const values = points.flatMap((p) => [p.count ?? 0, p.forecast ?? 0]);
   const maxDataValue = values.length > 0 ? Math.max(...values) : 0;
   const effectiveMax = zone.totalCapacity
@@ -59,15 +106,33 @@ export function ZoneAreaChart({ zone, points, isToday, latest, closedReason }: Z
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 pr-2">
-          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
-            {zone.locationName}
-          </h3>
-          {zone.totalCapacity && (
-            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Capacity: {zone.totalCapacity}
-            </div>
-          )}
+        <div className="flex min-w-0 flex-1 items-start gap-2 pr-2">
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            aria-label={`${isFavorite ? "Remove" : "Add"} ${zone.locationName} ${
+              isFavorite ? "from" : "to"
+            } favorites`}
+            aria-pressed={isFavorite}
+            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            className={`mt-0.5 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-colors ${
+              isFavorite
+                ? "border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400 dark:hover:bg-amber-950"
+                : "border-neutral-200 text-neutral-400 hover:border-amber-300 hover:text-amber-600 dark:border-neutral-700 dark:text-neutral-500 dark:hover:border-amber-700 dark:hover:text-amber-400"
+            }`}
+          >
+            <Star className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
+          </button>
+          <div className="min-w-0">
+            <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
+              {zone.locationName}
+            </h3>
+            {zone.totalCapacity && (
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Capacity: {zone.totalCapacity}
+              </div>
+            )}
+          </div>
         </div>
         {showLastCount && (
           <div className="text-right ml-4">
@@ -138,20 +203,11 @@ export function ZoneAreaChart({ zone, points, isToday, latest, closedReason }: Z
                 ticks={yAxisTicks}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgb(255, 255, 255)",
-                  border: "1px solid rgb(229, 229, 229)",
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                  fontSize: "12px",
-                }}
-                labelStyle={{ display: "none" }}
-                itemStyle={{ color: AMBER, fontWeight: "600" }}
-                formatter={(value: number | string, name: string | number, item: unknown) => {
-                  const payload = (item as { payload?: { label?: string } } | undefined)?.payload;
-                  const series = name === "forecast" ? "Forecast" : "Actual";
-                  return [value, `${series} · ${payload?.label ?? ""}`];
-                }}
+                content={<ZoneAreaTooltip />}
+                cursor={CHART_TOOLTIP_CURSOR}
+                wrapperStyle={CHART_TOOLTIP_WRAPPER_STYLE}
+                offset={12}
+                animationDuration={100}
               />
               <Area
                 type="monotone"
@@ -159,7 +215,7 @@ export function ZoneAreaChart({ zone, points, isToday, latest, closedReason }: Z
                 stroke={AMBER}
                 strokeWidth={2}
                 fill={`url(#gradient-${zone.locationId})`}
-                activeDot={{ r: 4, fill: AMBER }}
+                activeDot={{ r: 4, fill: AMBER, stroke: "var(--card)", strokeWidth: 2 }}
               />
               <Area
                 type="monotone"
@@ -169,7 +225,7 @@ export function ZoneAreaChart({ zone, points, isToday, latest, closedReason }: Z
                 strokeDasharray="4 4"
                 strokeOpacity={0.7}
                 fill={`url(#gradient-forecast-${zone.locationId})`}
-                activeDot={{ r: 3, fill: AMBER }}
+                activeDot={{ r: 4, fill: AMBER, stroke: "var(--card)", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

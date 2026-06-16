@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SEMESTERS, weekOfSemester } from "@/lib/academic-calendar";
 import { nowET, type ETParts } from "@/lib/time";
 import type { DashboardData, LatestReading, Reading } from "@/lib/queries";
 import { Header } from "@/components/dashboard/header";
-import { GoNowSection } from "@/components/dashboard/go-now-section";
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { ZoneChartsSection } from "@/components/dashboard/zone-charts-section";
 import { HeatmapSection } from "@/components/dashboard/heatmap-section";
 import { SemesterComparisonSection } from "@/components/dashboard/semester-comparison-section";
-import { buildBaselineLookup, groupZonesByFacility } from "@/components/dashboard/zone-utils";
+import {
+  buildBaselineLookup,
+  buildHeatmapLookup,
+  groupZonesByFacility,
+} from "@/components/dashboard/zone-utils";
 
 type DashboardProps = {
   data: DashboardData;
 };
+
+const FAVORITE_ZONES_STORAGE_KEY = "marino-stats:favorite-zones:v1";
 
 export function Dashboard({ data }: DashboardProps) {
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -22,6 +27,43 @@ export function Dashboard({ data }: DashboardProps) {
   );
 
   const zoneGroups = useMemo(() => groupZonesByFacility(data.zones), [data.zones]);
+  const validZoneIds = useMemo(
+    () => new Set(data.zones.map((zone) => zone.locationId)),
+    [data.zones]
+  );
+  const [favoriteZoneIds, setFavoriteZoneIds] = useState<Set<number>>(() => new Set());
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(FAVORITE_ZONES_STORAGE_KEY) ?? "[]");
+        if (!Array.isArray(stored)) return;
+
+        setFavoriteZoneIds(
+          new Set(
+            stored.filter(
+              (locationId): locationId is number =>
+                typeof locationId === "number" && validZoneIds.has(locationId)
+            )
+          )
+        );
+      } catch {
+        localStorage.removeItem(FAVORITE_ZONES_STORAGE_KEY);
+      }
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [validZoneIds]);
+
+  const toggleFavoriteZone = useCallback((locationId: number) => {
+    setFavoriteZoneIds((current) => {
+      const next = new Set(current);
+      if (next.has(locationId)) next.delete(locationId);
+      else next.add(locationId);
+      localStorage.setItem(FAVORITE_ZONES_STORAGE_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
 
   const [heatmapZoneId, setHeatmapZoneId] = useState<number | null>(
     () => zoneGroups[0]?.zones[0]?.locationId ?? null
@@ -44,6 +86,10 @@ export function Dashboard({ data }: DashboardProps) {
   const semester = SEMESTERS.find((s) => s.id === data.currentSemesterId) ?? SEMESTERS[0];
 
   const baselineLookup = useMemo(() => buildBaselineLookup(data.baselines), [data.baselines]);
+  const heatmapLookup = useMemo(
+    () => buildHeatmapLookup(data.recentReadings, data.todayET),
+    [data.recentReadings, data.todayET]
+  );
 
   const latestByZone = useMemo(() => {
     const map = new Map<number, LatestReading>();
@@ -84,12 +130,12 @@ export function Dashboard({ data }: DashboardProps) {
           weekNumber={weekOfSemester(data.todayET, semester)}
         />
 
-        <GoNowSection
+        <HeatmapSection
           zoneGroups={zoneGroups}
-          latestByZone={latestByZone}
-          baselineLookup={baselineLookup}
-          now={now}
-          todayET={data.todayET}
+          selectedZoneId={heatmapZoneId}
+          onSelectZone={setHeatmapZoneId}
+          heatmapLookup={heatmapLookup}
+          semester={semester}
         />
 
         <DateSelector
@@ -107,26 +153,19 @@ export function Dashboard({ data }: DashboardProps) {
           latestByZone={latestByZone}
           baselineLookup={baselineLookup}
           now={now}
+          favoriteZoneIds={favoriteZoneIds}
+          onToggleFavorite={toggleFavoriteZone}
         />
 
-        <div className="mt-8">
-          <HeatmapSection
+        <div className="mt-16 border-t border-neutral-200 pt-10 dark:border-neutral-800">
+          <SemesterComparisonSection
             zoneGroups={zoneGroups}
-            selectedZoneId={heatmapZoneId}
-            onSelectZone={setHeatmapZoneId}
-            baselineLookup={baselineLookup}
-            semester={semester}
+            selectedZoneId={comparisonZoneId}
+            onSelectZone={setComparisonZoneId}
+            semesterHourlyByZone={semesterHourlyByZone}
+            semesters={SEMESTERS}
           />
         </div>
-
-        <SemesterComparisonSection
-          zoneGroups={zoneGroups}
-          selectedZoneId={comparisonZoneId}
-          onSelectZone={setComparisonZoneId}
-          semesterHourlyByZone={semesterHourlyByZone}
-          semesters={SEMESTERS}
-          todayET={data.todayET}
-        />
 
         {data.zones.length === 0 && (
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-12 text-center">

@@ -1,13 +1,14 @@
-import type { HourlyBaseline, Zone } from "@/lib/queries";
-
-/** Studios are class-driven spaces; busy/quiet verdicts don't apply. */
-export const CLASS_DRIVEN_LOCATION_IDS = new Set([9531, 9532]);
+import { dayOfWeekOf } from "@/lib/time";
+import type { HourlyBaseline, Reading, Zone } from "@/lib/queries";
 
 export type ZoneGroup = { facilityName: string; zones: Zone[] };
 
 export type BaselineCell = { avg: number; samples: number };
 /** zone → day-of-week (0=Sun…6=Sat) → hour → cell */
 export type BaselineLookup = Map<number, Map<number, Map<number, BaselineCell>>>;
+export type HeatmapCell = BaselineCell & { date: string };
+/** zone → day-of-week (0=Sun…6=Sat) → hour → latest completed-day cell */
+export type HeatmapLookup = Map<number, Map<number, Map<number, HeatmapCell>>>;
 
 export const getCompactZoneName = (locationName: string) => {
   const parts = locationName.split(/\s*-\s*/);
@@ -50,6 +51,45 @@ export function buildBaselineLookup(baselines: HourlyBaseline[]): BaselineLookup
     const byDay = lookup.get(b.locationId)!;
     if (!byDay.has(b.dayOfWeek)) byDay.set(b.dayOfWeek, new Map());
     byDay.get(b.dayOfWeek)!.set(b.hour, { avg: b.avgCount, samples: b.samples });
+  }
+  return lookup;
+}
+
+export function buildHeatmapLookup(readings: Reading[], today: string): HeatmapLookup {
+  const lookup: HeatmapLookup = new Map();
+  const latestDateByZoneDay = new Map<string, string>();
+
+  for (const reading of readings) {
+    const date = reading.recordedAt.slice(0, 10);
+    if (date >= today) continue;
+    const key = `${reading.locationId}-${dayOfWeekOf(date)}`;
+    const latest = latestDateByZoneDay.get(key);
+    if (!latest || date > latest) latestDateByZoneDay.set(key, date);
+  }
+
+  const buckets = new Map<string, { sum: number; samples: number; date: string }>();
+  for (const reading of readings) {
+    const date = reading.recordedAt.slice(0, 10);
+    const dayOfWeek = dayOfWeekOf(date);
+    if (latestDateByZoneDay.get(`${reading.locationId}-${dayOfWeek}`) !== date) continue;
+    const hour = Number(reading.recordedAt.slice(11, 13));
+    const key = `${reading.locationId}-${dayOfWeek}-${hour}`;
+    const bucket = buckets.get(key) ?? { sum: 0, samples: 0, date };
+    bucket.sum += reading.count;
+    bucket.samples += 1;
+    buckets.set(key, bucket);
+  }
+
+  for (const [key, bucket] of buckets) {
+    const [locationId, dayOfWeek, hour] = key.split("-").map(Number);
+    if (!lookup.has(locationId)) lookup.set(locationId, new Map());
+    const byDay = lookup.get(locationId)!;
+    if (!byDay.has(dayOfWeek)) byDay.set(dayOfWeek, new Map());
+    byDay.get(dayOfWeek)!.set(hour, {
+      avg: bucket.sum / bucket.samples,
+      samples: bucket.samples,
+      date: bucket.date,
+    });
   }
   return lookup;
 }

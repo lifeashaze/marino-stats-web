@@ -3,13 +3,18 @@
 import { formatDateLabel } from "@/lib/time";
 
 type DateSelectorProps = {
-  dates: string[]; // 'YYYY-MM-DD', descending
+  dates: string[];
   selected: string;
   onSelect: (date: string) => void;
   todayET: string;
 };
 
-export function DateSelector({ dates, selected, onSelect, todayET }: DateSelectorProps) {
+export function DateSelector({
+  dates,
+  selected,
+  onSelect,
+  todayET,
+}: DateSelectorProps) {
   return (
     <div className="mb-8">
       <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
