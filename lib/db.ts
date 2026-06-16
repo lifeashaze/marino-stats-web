@@ -17,21 +17,3 @@ const createDbClient = () => {
 };
 
 export const db = createDbClient();
-
-export type Location = {
-  location_id: number;
-  location_name: string;
-  facility_name: string | null;
-  total_capacity?: number; // Optional until backend is updated
-};
-
-export type LocationCount = {
-  location_id: number;
-  last_count: number;
-  last_updated_at: string;
-  fetched_at: string;
-};
-
-export type LocationWithCounts = Location & {
-  counts: LocationCount[];
-};
