@@ -37,7 +37,7 @@ export function Header({ semesterLabel, weekNumber }: HeaderProps) {
         </div>
       </div>
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 shadow-sm dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
-        <span className="font-semibold">New:</span> favorite the zones you visit most and compare
+        <span className="font-semibold">New:</span> favourite the zones you visit most and compare
         hourly occupancy across semesters.
       </div>
     </div>
