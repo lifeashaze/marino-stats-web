@@ -130,25 +130,30 @@ export function ZoneChartsSection({
         </div>
       ) : null}
 
-      {zoneGroups.map(({ facilityName, zones }) => (
-        <div key={facilityName}>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              {facilityName}
-            </h2>
-            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">
-              {zones.length} {zones.length === 1 ? "zone" : "zones"}
-            </span>
-          </div>
+      {zoneGroups.map(({ facilityName, zones }) => {
+        const unpinnedZones = zones.filter((zone) => !favoriteZoneIds.has(zone.locationId));
+        if (unpinnedZones.length === 0) return null;
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {zones.map((zone) => (
-              <ZoneChart key={zone.locationId} zone={zone} {...chartProps} />
-            ))}
+        return (
+          <div key={facilityName}>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                {facilityName}
+              </h2>
+              <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+              <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                {unpinnedZones.length} {unpinnedZones.length === 1 ? "zone" : "zones"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {unpinnedZones.map((zone) => (
+                <ZoneChart key={zone.locationId} zone={zone} {...chartProps} />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
