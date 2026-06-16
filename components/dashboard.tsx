@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import { SEMESTERS } from "@/lib/academic-calendar";
 import { nowET, type ETParts } from "@/lib/time";
 import type { DashboardData, LatestReading, Reading } from "@/lib/queries";
@@ -169,6 +170,19 @@ export function Dashboard({ data }: DashboardProps) {
             <p className="text-neutral-500 dark:text-neutral-400">No facility data available</p>
           </div>
         )}
+
+        <footer className="mt-16 border-t border-neutral-200 py-8 text-center text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+          built by{" "}
+          <a
+            href="https://abh1shek.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-1 font-medium text-neutral-700 underline underline-offset-4 transition-colors hover:text-[#C8102E] dark:text-neutral-300 dark:hover:text-[#ff8fa0]"
+          >
+            abhishek
+            <ExternalLink className="h-3 w-3 opacity-60 transition-opacity group-hover:opacity-100" />
+          </a>
+        </footer>
       </div>
     </div>
   );
