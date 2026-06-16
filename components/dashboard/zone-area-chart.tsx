@@ -38,7 +38,7 @@ type ZoneAreaChartProps = {
   onToggleFavorite: () => void;
 };
 
-const AMBER = "rgb(217, 119, 6)";
+const NORTHEASTERN_RED = "#C8102E";
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 
 type ZoneAreaTooltipProps = {
@@ -63,7 +63,7 @@ function ZoneAreaTooltip({ active, payload }: ZoneAreaTooltipProps) {
       label: item.name === "forecast" ? "Forecast" : "Actual",
       value: COUNT_FORMATTER.format(Number(item.value)),
       unit: "people",
-      color: AMBER,
+      color: NORTHEASTERN_RED,
     }));
 
   return <ChartTooltip title={title} subtitle="Occupancy" rows={rows} />;
@@ -104,7 +104,7 @@ export function ZoneAreaChart({
   const showLastCount = isToday && latest;
 
   return (
-    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
+    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-[#C8102E]/40 dark:hover:border-[#ff4f68]/60 transition-colors">
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0 flex-1 pr-2">
           <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
@@ -127,8 +127,8 @@ export function ZoneAreaChart({
               title={isFavorite ? "Unpin zone" : "Pin zone"}
               className={`inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
                 isFavorite
-                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
-                  : "text-neutral-500 hover:bg-neutral-100 hover:text-amber-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-amber-300"
+                  ? "bg-[#C8102E]/10 text-[#C8102E] hover:bg-[#C8102E]/15 dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0] dark:hover:bg-[#ff4f68]/25"
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-[#C8102E] dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-[#ff8fa0]"
                 }`}
             >
               <Pin className="h-3 w-3" fill={isFavorite ? "currentColor" : "none"} />
@@ -142,7 +142,7 @@ export function ZoneAreaChart({
               Last Count
             </div>
             <div className="flex items-center justify-end gap-2">
-              <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
+              <div className="text-3xl font-bold text-[#C8102E] dark:text-[#ff4f68]">
                 {latest.count}
               </div>
               {zone.totalCapacity && (
@@ -162,8 +162,8 @@ export function ZoneAreaChart({
             <AreaChart data={points} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id={`gradient-${zone.locationId}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={AMBER} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={AMBER} stopOpacity={0} />
+                  <stop offset="0%" stopColor={NORTHEASTERN_RED} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={NORTHEASTERN_RED} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient
                   id={`gradient-forecast-${zone.locationId}`}
@@ -172,8 +172,8 @@ export function ZoneAreaChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="0%" stopColor={AMBER} stopOpacity={0.12} />
-                  <stop offset="95%" stopColor={AMBER} stopOpacity={0} />
+                  <stop offset="0%" stopColor={NORTHEASTERN_RED} stopOpacity={0.12} />
+                  <stop offset="95%" stopColor={NORTHEASTERN_RED} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -214,20 +214,20 @@ export function ZoneAreaChart({
               <Area
                 type="monotone"
                 dataKey="count"
-                stroke={AMBER}
+                stroke={NORTHEASTERN_RED}
                 strokeWidth={2}
                 fill={`url(#gradient-${zone.locationId})`}
-                activeDot={{ r: 4, fill: AMBER, stroke: "var(--card)", strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: NORTHEASTERN_RED, stroke: "var(--card)", strokeWidth: 2 }}
               />
               <Area
                 type="monotone"
                 dataKey="forecast"
-                stroke={AMBER}
+                stroke={NORTHEASTERN_RED}
                 strokeWidth={2}
                 strokeDasharray="4 4"
                 strokeOpacity={0.7}
                 fill={`url(#gradient-forecast-${zone.locationId})`}
-                activeDot={{ r: 4, fill: AMBER, stroke: "var(--card)", strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: NORTHEASTERN_RED, stroke: "var(--card)", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

@@ -8,8 +8,8 @@ export const revalidate = 300;
 function SetupNotice() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a] p-4">
-      <div className="bg-white dark:bg-neutral-900 border border-amber-200 dark:border-amber-900 rounded-xl p-8 max-w-md">
-        <h2 className="text-lg font-semibold text-amber-700 dark:text-amber-400 mb-2">
+      <div className="bg-white dark:bg-neutral-900 border border-[#C8102E]/20 dark:border-[#660817] rounded-xl p-8 max-w-md">
+        <h2 className="text-lg font-semibold text-[#C8102E] dark:text-[#ff8fa0] mb-2">
           Database not configured
         </h2>
         <p className="text-sm text-neutral-600 dark:text-neutral-400">

@@ -51,7 +51,7 @@ const zones: ZoneMock[] = [
 
 function MiniChart() {
   return (
-    <svg viewBox="0 0 280 90" className="h-24 w-full text-amber-600 dark:text-amber-500">
+    <svg viewBox="0 0 280 90" className="h-24 w-full text-[#C8102E] dark:text-[#ff4f68]">
       <path
         d="M8 70 C 36 42, 56 76, 82 52 S 126 36, 154 48 S 196 18, 226 38 S 252 58, 272 34"
         fill="none"
@@ -71,7 +71,7 @@ function MiniChart() {
 function FavoriteBadge({ isFavorite }: { isFavorite: boolean }) {
   if (!isFavorite) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[#C8102E]/10 px-2 py-0.5 text-[11px] font-medium text-[#C8102E] dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]">
       <Pin className="h-3 w-3" fill="currentColor" />
       Pinned
     </span>
@@ -105,7 +105,7 @@ function ZoneCardShell({
           <p className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-500">
             Now
           </p>
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-500">{zone.count}</p>
+          <p className="text-2xl font-bold text-[#C8102E] dark:text-[#ff4f68]">{zone.count}</p>
         </div>
       </div>
       <MiniChart />
@@ -153,8 +153,8 @@ function CornerActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantPr
               aria-pressed={isFavorite}
               className={`absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                 isFavorite
-                  ? "border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                  : "border-neutral-200 bg-white text-neutral-400 hover:text-amber-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-amber-300"
+                  ? "border-[#C8102E]/35 bg-[#C8102E]/10 text-[#C8102E] dark:border-[#ff4f68]/55 dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]"
+                  : "border-neutral-200 bg-white text-neutral-400 hover:text-[#C8102E] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-500 dark:hover:text-[#ffc9d2]"
               }`}
             >
               <Star className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
@@ -190,8 +190,8 @@ function TextActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantProp
                 onClick={() => onToggleFavorite(zone.id)}
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                   isFavorite
-                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-amber-100 hover:text-amber-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-amber-500/15 dark:hover:text-amber-300"
+                    ? "bg-[#C8102E]/10 text-[#C8102E] hover:bg-[#C8102E]/20 dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]"
+                    : "bg-neutral-100 text-neutral-700 hover:bg-[#C8102E]/10 hover:text-[#C8102E] dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-[#ff4f68]/15 dark:hover:text-[#ffc9d2]"
                 }`}
               >
                 {isFavorite ? (
@@ -224,8 +224,8 @@ function SelectionModeVariant({ zones, favoriteIds, onToggleFavorite }: VariantP
             onClick={() => onToggleFavorite(zone.id)}
             className={`rounded-lg border p-4 text-left shadow-sm transition-colors ${
               isFavorite
-                ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-500/10"
-                : "border-neutral-200 bg-white hover:border-amber-200 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-800"
+                ? "border-[#C8102E]/35 bg-[#C8102E]/5 dark:border-[#ff4f68]/55 dark:bg-[#ff4f68]/10"
+                : "border-neutral-200 bg-white hover:border-[#C8102E]/20 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-[#8f0b22]"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
@@ -240,7 +240,7 @@ function SelectionModeVariant({ zones, favoriteIds, onToggleFavorite }: VariantP
               <span
                 className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
                   isFavorite
-                    ? "border-amber-400 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+                    ? "border-[#ff8fa0] bg-[#C8102E]/10 text-[#C8102E] dark:bg-[#ff4f68]/20 dark:text-[#ff8fa0]"
                     : "border-neutral-300 text-neutral-400 dark:border-neutral-700"
                 }`}
               >
@@ -281,8 +281,8 @@ function ChipRailVariant({ zones, favoriteIds, onToggleFavorite }: VariantProps)
               onClick={() => onToggleFavorite(zone.id)}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                 isFavorite
-                  ? "border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                  : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-amber-300 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400"
+                  ? "border-[#C8102E]/35 bg-[#C8102E]/10 text-[#C8102E] dark:border-[#ff4f68]/55 dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]"
+                  : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-[#C8102E]/35 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400"
               }`}
             >
               <Bookmark className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
@@ -327,7 +327,7 @@ export default function IdeationPage() {
         <div className="mb-8">
           <Link
             href="/"
-            className="text-sm font-medium text-amber-700 hover:underline dark:text-amber-400"
+            className="text-sm font-medium text-[#C8102E] hover:underline dark:text-[#ff8fa0]"
           >
             Back to dashboard
           </Link>
@@ -349,7 +349,7 @@ export default function IdeationPage() {
               {favoriteZones.map((zone) => (
                 <span
                   key={zone.id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#C8102E]/10 px-3 py-1 text-sm font-medium text-[#8f0b22] dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]"
                 >
                   <Star className="h-3.5 w-3.5" fill="currentColor" />
                   {zone.name}

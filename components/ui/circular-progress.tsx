@@ -25,7 +25,7 @@ export function CircularProgress({
   const getColor = () => {
     if (percentage < 40) return "rgb(34, 197, 94)"; // green
     if (percentage < 70) return "rgb(234, 179, 8)"; // yellow
-    return "rgb(239, 68, 68)"; // red
+    return "#C8102E"; // Northeastern red
   };
 
   const color = getColor();

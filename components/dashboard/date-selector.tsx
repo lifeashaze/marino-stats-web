@@ -38,7 +38,7 @@ export function DateSelector({
               className={[
                 "cursor-pointer w-full rounded-full px-3 py-1.5 text-center text-xs sm:text-sm font-medium transition-colors",
                 isSelected
-                  ? "bg-amber-100/80 text-amber-700 ring-1 ring-amber-300/70 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/50"
+                  ? "bg-[#C8102E]/10 text-[#C8102E] ring-1 ring-[#C8102E]/40 dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0] dark:ring-[#ff4f68]/45"
                   : "bg-neutral-100/80 text-neutral-600 hover:bg-neutral-200/80 hover:text-neutral-900 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:bg-neutral-700/70 dark:hover:text-neutral-200",
               ].join(" ")}
             >

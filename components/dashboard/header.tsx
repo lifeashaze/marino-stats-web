@@ -34,7 +34,7 @@ export function Header() {
                 href="https://recreation.northeastern.edu/live-facility-counts/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-600 dark:text-amber-500 hover:underline"
+                className="text-[#C8102E] dark:text-[#ff4f68] hover:underline"
               >
                 Live Facility Counts
               </a>
@@ -42,7 +42,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setShowFeatures(true)}
-              className="mt-1 block cursor-pointer text-left text-xs font-medium text-amber-700 underline underline-offset-4 transition-colors hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 sm:text-sm"
+              className="mt-1 block cursor-pointer text-left text-xs font-medium text-[#C8102E] underline underline-offset-4 transition-colors hover:text-[#8f0b22] dark:text-[#ff8fa0] dark:hover:text-[#ffc9d2] sm:text-sm"
             >
               What&apos;s new?
             </button>
@@ -71,7 +71,7 @@ export function Header() {
             <div className="border-b border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-800 dark:bg-neutral-900/60">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#C8102E] dark:text-[#ff8fa0]">
                     New features
                   </p>
                   <h2
@@ -101,7 +101,7 @@ export function Header() {
             <div className="p-5">
               <div className="space-y-3">
                 <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C8102E]/10 text-[#C8102E] dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]">
                     <Pin className="h-4 w-4" />
                   </div>
                   <div>
@@ -115,7 +115,7 @@ export function Header() {
                   </div>
                 </div>
                 <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-950 dark:bg-white/10 dark:text-white">
                     <TrendingUp className="h-4 w-4" />
                   </div>
                   <div>
@@ -129,7 +129,7 @@ export function Header() {
                   </div>
                 </div>
                 <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C8A978]/20 text-[#7a5f35] dark:bg-[#C8A978]/20 dark:text-[#e2c997]">
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <div>
@@ -145,7 +145,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setShowFeatures(false)}
-                className="mt-5 w-full cursor-pointer rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:text-neutral-950 dark:hover:bg-amber-400"
+                className="mt-5 w-full cursor-pointer rounded-lg bg-[#C8102E] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9f0d25] dark:bg-[#ff4f68] dark:text-white dark:hover:bg-[#ff8fa0]"
               >
                 Got it
               </button>

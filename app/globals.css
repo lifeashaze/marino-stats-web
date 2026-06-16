@@ -50,47 +50,47 @@
   --foreground: 15 15 15;
   --radius: 0.5rem;
 
-  /* Anthropic-inspired light mode colors */
-  --primary: #d97706;
+  /* Northeastern University-inspired light mode colors */
+  --primary: #c8102e;
   --primary-foreground: #ffffff;
-  --secondary: #f59e0b;
+  --secondary: #000000;
   --muted: #f5f5f4;
   --muted-foreground: #737373;
-  --accent: #fef3c7;
-  --accent-foreground: #92400e;
+  --accent: #fde8ed;
+  --accent-foreground: #8f0b22;
   --border: #e7e5e4;
   --card: #ffffff;
   --card-foreground: #0f0f0f;
 
-  /* Chart series (semester comparison) — chart-1 is the brand amber */
-  --chart-1: #d97706;
-  --chart-2: #0d9488;
-  --chart-3: #7c3aed;
-  --chart-4: #e11d48;
-  --chart-5: #16a34a;
+  /* Chart series — chart-1 is Northeastern red. */
+  --chart-1: #c8102e;
+  --chart-2: #000000;
+  --chart-3: #a4804a;
+  --chart-4: #6b7280;
+  --chart-5: #c8a978;
 }
 
 .dark {
   --background: 10 10 10;
   --foreground: 250 250 250;
 
-  /* Anthropic-inspired dark mode colors */
-  --primary: #f59e0b;
-  --primary-foreground: #0a0a0a;
-  --secondary: #d97706;
+  /* Northeastern University-inspired dark mode colors */
+  --primary: #ff4f68;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
   --muted: #1c1917;
   --muted-foreground: #a8a29e;
-  --accent: #292524;
-  --accent-foreground: #fbbf24;
+  --accent: #330711;
+  --accent-foreground: #ffb3bf;
   --border: #292524;
   --card: #171717;
   --card-foreground: #fafafa;
 
-  --chart-1: #f59e0b;
-  --chart-2: #2dd4bf;
-  --chart-3: #a78bfa;
-  --chart-4: #fb7185;
-  --chart-5: #4ade80;
+  --chart-1: #ff4f68;
+  --chart-2: #ffffff;
+  --chart-3: #c8a978;
+  --chart-4: #9ca3af;
+  --chart-5: #a4804a;
 }
 
 @layer base {

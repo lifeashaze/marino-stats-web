@@ -224,7 +224,7 @@ Want to use this for your own gym or facility? Here's what to modify:
    - Update `lib/academic-calendar.ts` with your institution's semester dates and closures
 
 3. **Customize the UI**:
-   - Chart colors: `components/dashboard/zone-area-chart.tsx` (search for `AMBER`)
+   - Chart colors: `components/dashboard/zone-area-chart.tsx` (search for `NORTHEASTERN_RED`)
    - Layout: Modify the grids in `components/dashboard/*-section.tsx`
    - Theme colors: `app/globals.css` CSS variables
 

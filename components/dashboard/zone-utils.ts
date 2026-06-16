@@ -98,5 +98,5 @@ export function buildHeatmapLookup(readings: Reading[], today: string): HeatmapL
 export const getUtilizationColor = (utilization: number) => {
   if (utilization < 40) return "rgb(34, 197, 94)";
   if (utilization < 70) return "rgb(234, 179, 8)";
-  return "rgb(239, 68, 68)";
+  return "#C8102E";
 };

@@ -79,7 +79,7 @@ export function HeatmapSection({
               {[
                 ["Low", "rgb(34, 197, 94)"],
                 ["Med", "rgb(234, 179, 8)"],
-                ["High", "rgb(239, 68, 68)"],
+                ["High", "#C8102E"],
               ].map(([label, color]) => (
                 <div
                   key={label}
@@ -150,7 +150,7 @@ export function HeatmapSection({
                     return (
                       <div
                         key={`${rowIdx}-${hour}`}
-                        className="h-6 sm:h-7 rounded-sm hover:ring-1 hover:ring-amber-500 transition-all cursor-pointer relative"
+                        className="h-6 sm:h-7 rounded-sm hover:ring-1 hover:ring-[#C8102E] transition-all cursor-pointer relative"
                         style={{ backgroundColor, opacity, backgroundImage }}
                         onMouseEnter={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
