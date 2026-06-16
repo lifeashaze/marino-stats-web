@@ -1,240 +1,212 @@
 # Marino Stats Web
 
-> A clean, functional web dashboard for visualizing Northeastern University recreation facility capacity over time.
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-149eca?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Turso](https://img.shields.io/badge/Turso-libSQL-4ff8d2?style=flat-square)](https://turso.tech)
 
-Built to track and display historical occupancy trends across multiple recreation facilities. Displays real-time occupancy data with interactive area charts, date filtering, and responsive design.
+A Next.js dashboard for Northeastern recreation facility traffic. It turns scraped occupancy counts into a quick answer to a practical question: **should I go to the gym now?**
 
-**Live Data Source**: [Northeastern Recreation Live Facility Counts](https://recreation.northeastern.edu/live-facility-counts/)
+The app reads historical counts from Turso, renders recent zone charts, highlights traffic patterns by weekday and hour, and compares semester-level usage trends across Marino Recreation Center and related recreation facilities.
 
----
+[Overview](#overview) • [Features](#features) • [Getting Started](#getting-started) • [Data Model](#data-model) • [Project Structure](#project-structure) • [Troubleshooting](#troubleshooting)
 
-**Use Cases:**
-- 📊 Analyze peak usage times for gym facilities
-- 📈 Track occupancy trends over days/weeks
-- 🏋️ Plan your gym visits based on historical data
-- 🔧 Adapt this for your own facility tracking needs
+> [!IMPORTANT]
+> This repository is the dashboard only. The scraper that reads [Northeastern Recreation Live Facility Counts](https://recreation.northeastern.edu/live-facility-counts/) and writes to Turso runs outside this project.
+
+## Overview
+
+Marino Stats Web is built as a mostly server-rendered analytics surface:
+
+- `app/page.tsx` fetches the dashboard payload and uses ISR with a 5-minute revalidation window.
+- `lib/queries.ts` aggregates all required data in one Turso `db.batch(..., "read")` call.
+- `components/dashboard.tsx` hydrates a small client layer for date selection, zone selection, chart interactions, pinned zones, and the live Eastern-time clock.
+
+The result is a compact, cache-friendly page that can still support interactive filtering without public API routes.
+
+```mermaid
+flowchart LR
+  scraper["External scraper"] --> turso[("Turso / libSQL")]
+  turso --> queries["lib/queries.ts<br/>batched read aggregation"]
+  queries --> page["Next.js page<br/>ISR: 300s"]
+  page --> dashboard["Interactive dashboard"]
+```
 
 ## Features
 
-- 🔮 **Rest-of-today forecast**: Dashed projection of how each zone will fill up, based on day-of-week patterns scaled by how today is tracking
-- 📊 **Interactive Area Charts**: Facility occupancy over time with gradient-filled area charts
-- 📅 **Date-Based Filtering**: View charts for the most recent week plus today
-- 📌 **Local Pins**: Pin frequently visited zones to the top of the chart list; preferences stay in the browser
-- 🗓️ **Weekday analytics**: Heatmap rows use one latest completed date per weekday; semester-vs-semester comparison charts; academic-calendar closure handling
-- 🏢 **Multi-Facility Support**: Organized by facility with all zones displayed per facility
-- 🌓 **Dark Mode**: Toggle between light and dark themes
-- 📱 **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
-- ⚡ **Optimized Loading**: SQL-side aggregation + ISR caching (~30 KB gzipped page); all filtering is instant and client-side
-
-## How It Works
-
-This is a **visualization dashboard** that displays historical occupancy data. The workflow is:
-
-1. **Data Collection** (separate process, not included): A separate script/service periodically scrapes the [Northeastern Recreation Live Facility Counts](https://recreation.northeastern.edu/live-facility-counts/) page and stores the data in a Turso database
-2. **Data Storage**: Historical counts are stored in Turso with timestamps
-3. **Data Visualization** (this app): The dashboard queries the database and displays interactive charts
-
-**Note**: This repository contains only the visualization dashboard. You'll need to set up your own data collection pipeline to populate the database.
+- **Traffic heatmap**: weekday-by-hour grid for the selected zone, using one latest completed date per weekday to avoid stale fallback slots.
+- **Recent zone charts**: per-zone Recharts area charts over the latest 8 dates with capacity-aware axes.
+- **Rest-of-day forecast**: dashed projection for today's charts, based on current-semester day-of-week baselines scaled by today's actual traffic.
+- **Semester comparison**: hourly average lines by semester, with new semesters appearing automatically as data accumulates.
+- **Pinned zones**: browser-local pins keep frequently visited zones near the top.
+- **Closure awareness**: academic calendar and facility-specific closure rules keep holidays, snow days, and SquashBusters weekend closures out of baselines.
+- **Dark mode**: neutral UI with Northeastern red accents and chart tokens shared across light and dark themes.
+- **Credential-safe builds**: when Turso env vars are absent, the app builds and renders a setup notice instead of failing.
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 with App Router
-- **UI Library**: React 19
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4 with OKLCH colors
-- **Components**: shadcn/ui (Base UI primitives)
-- **Charts**: Recharts
-- **Database**: Turso (libSQL)
-- **Icons**: Lucide React
+| Layer | Technology |
+| --- | --- |
+| App framework | [Next.js 16](https://nextjs.org) App Router |
+| UI runtime | [React 19](https://react.dev), TypeScript |
+| Styling | [Tailwind CSS 4](https://tailwindcss.com), shadcn/ui components on Base UI primitives |
+| Charts | [Recharts](https://recharts.org) |
+| Database | [Turso](https://turso.tech) / libSQL via `@libsql/client` |
+| Deployment fit | Vercel or any Node-capable Next.js host |
 
 ## Getting Started
 
-> ⚠️ **Important**: This is a visualization-only dashboard. You need to set up a separate data collection pipeline to populate the Turso database with facility count data.
-
 ### Prerequisites
 
-- **Node.js 20+** installed
-- **Turso database** account ([turso.tech](https://turso.tech)) with historical data populated
-- **Data collection pipeline** (separate from this repo) to populate the database
+- Node.js 20+
+- npm
+- A Turso database populated by a separate scraper
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/marino-stats-web.git
+git clone https://github.com/lifeashaze/marino-stats-web.git
 cd marino-stats-web
-```
-
-2. Install dependencies:
-```bash
 npm install
 ```
 
-3. Set up environment variables:
+Copy the example environment file and fill in the Turso credentials:
 
-Create a `.env.local` file in the root directory:
-```env
-TURSO_DB_URL=your_turso_db_url_here
-TURSO_AUTH_TOKEN=your_turso_auth_token_here
+```bash
+cp .env.example .env.local
 ```
 
-4. Set up your Turso database with the required schema:
+```env
+TURSO_DB_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+> [!NOTE]
+> If the Turso variables are missing or still set to placeholder values, the app shows a "Database not configured" screen. This is intentional so CI and production builds can run without database credentials.
+
+## Development Commands
+
+```bash
+npm run dev      # Start the local Next.js server
+npm run build    # Build for production
+npm run start    # Serve the production build
+npm run lint     # Run ESLint
+```
+
+There is no formal test suite. For data-layer work, use short read-only scripts:
+
+```bash
+npx -y tsx --env-file=.env.local ./path/to/script.mts
+```
+
+## Data Model
+
+The dashboard expects two tables:
 
 ```sql
--- Table for storing facility locations/zones
-CREATE TABLE IF NOT EXISTS locations (
+CREATE TABLE locations (
   location_id INTEGER PRIMARY KEY,
-  location_name TEXT NOT NULL,        -- e.g., "Marino Center - Cardio Area"
-  facility_name TEXT                  -- e.g., "Marino Center"
+  location_name TEXT NOT NULL,
+  facility_name TEXT,
+  total_capacity INTEGER
 );
 
--- Table for storing historical occupancy counts
-CREATE TABLE IF NOT EXISTS location_counts (
+CREATE TABLE location_counts (
   location_id INTEGER NOT NULL,
-  last_count INTEGER NOT NULL,        -- Occupancy count at this time
-  last_updated_at TEXT NOT NULL,      -- When the count was recorded
-  fetched_at TEXT NOT NULL,           -- When the data was scraped
+  last_count INTEGER NOT NULL,
+  last_updated_at TEXT NOT NULL,
+  fetched_at TEXT NOT NULL,
   PRIMARY KEY (location_id, fetched_at),
   FOREIGN KEY (location_id) REFERENCES locations(location_id)
 );
 ```
 
-> **Note**: You'll need to populate these tables with your own data collection process.
+### Timestamp Rules
 
-5. Run the development server:
-```bash
-npm run dev
-```
+> [!WARNING]
+> `last_updated_at` is a naive Eastern-time string such as `2026-06-10T16:13:35.627`. Do not parse it with `new Date()`. Bucket it with SQLite `date()` / `strftime()` or use helpers from `lib/time.ts`.
 
-6. Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
-
-## Development Commands
-
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Run linter
-npm run lint
-```
-
+- `last_updated_at`: facility count timestamp, stored as naive America/New_York wall time.
+- `fetched_at`: scraper fetch timestamp, stored as true UTC.
+- Day of week is always `0=Sun ... 6=Sat`, matching SQLite `strftime('%w')`.
+- Counts can exceed `total_capacity`; the UI displays true values and only saturates colors/gauges at 100%.
+- Rows are inserted only when upstream counts change, so gaps are normal. Scraper liveness should be checked with `MAX(fetched_at)`, not with an old zone-level `last_updated_at`.
 
 ## Project Structure
 
+```text
+app/
+  layout.tsx              Root layout, metadata, analytics
+  page.tsx                Server page, ISR, setup notice
+  globals.css             Tailwind 4 theme variables and chart tokens
+components/
+  dashboard.tsx           Client dashboard orchestrator
+  dashboard/              Header, heatmap, charts, selectors, comparisons
+  ui/                     shadcn/ui components
+lib/
+  academic-calendar.ts    Semester windows and closure rules
+  db.ts                   Turso client setup
+  forecast.ts             Rest-of-day forecast logic
+  queries.ts              Batched dashboard SQL payload
+  time.ts                 Eastern-time helpers and timestamp utilities
+public/
+  *.svg                   Static framework assets
 ```
-├── app/
-│   ├── layout.tsx            # Root layout with font configuration
-│   ├── page.tsx              # Server component: ISR + single aggregated data fetch
-│   └── globals.css           # Global styles, CSS variables, and theming
-├── components/
-│   ├── dashboard.tsx         # Client orchestrator (state + lookups)
-│   ├── dashboard/            # Page sections: charts, heatmap, comparison
-│   ├── ui/                   # shadcn/ui Base UI components
-│   └── theme-toggle.tsx      # Light/dark mode toggle
-├── lib/
-│   ├── db.ts                 # Turso database client configuration
-│   ├── queries.ts            # SQL-side aggregation (the page's data contract)
-│   ├── time.ts               # Eastern-time helpers (see file header before touching dates)
-│   ├── academic-calendar.ts  # Semester boundaries, closures (edit yearly)
-│   ├── forecast.ts           # Rest-of-today forecast math
-│   └── utils.ts              # Utility functions (cn, etc.)
-└── public/                   # Static assets
-```
 
-There are no public API endpoints — the page is the database's only consumer.
+There are no public API routes. The page is the only consumer of the database payload.
 
-## Customization
+## Configuration Notes
 
-### Modifying Charts
-
-The dashboard uses Recharts. To customize chart appearance, edit `components/dashboard/zone-area-chart.tsx` (per-zone area charts + forecast overlay) and `components/dashboard/semester-comparison-section.tsx`:
-- Gradient colors (search for `linearGradient`)
-- Chart dimensions and margins
-- Tooltip styling
-- Axis configuration
-
-### Styling
-
-The project uses:
-- **Tailwind CSS 4** for utility-first styling
-- **OKLCH colors** for perceptually uniform color spaces
-- **CSS variables** in `app/globals.css` for light/dark mode theming
-- Theme toggle managed by `components/theme-toggle.tsx`
-
-To customize colors, edit the CSS variables in `app/globals.css` under `:root` (light mode) and `.dark` (dark mode).
-
-## Troubleshooting
-
-### "Database not configured" error
-- Verify `TURSO_DB_URL` and `TURSO_AUTH_TOKEN` are set in `.env.local`
-- Restart the dev server after adding environment variables
-
-### No data showing / Empty charts
-- Check that your database has data in the `locations` and `location_counts` tables
-- Verify your data collection pipeline is running and inserting data
-- Check the browser console for API errors
-
-### Date selector is empty
-- The app automatically populates dates from your database
-- If no dates appear, your `location_counts` table is empty
-- Make sure `last_updated_at` timestamps are valid ISO date strings
+- Edit `lib/academic-calendar.ts` when Northeastern publishes new semester dates or closure rules.
+- Keep `--chart-1` through `--chart-5` defined in both `:root` and `.dark`; Recharts uses these CSS variables directly.
+- The app is tuned for the Northeastern recreation data shape, but the schema is small enough to adapt for other facilities.
 
 ## Deployment
 
-This Next.js app can be deployed to any platform that supports Node.js:
+Deploy as a standard Next.js application. Vercel is the natural target, but any platform that supports Node.js and Next.js can run it.
 
-- **Vercel** (recommended): Zero-config deployment for Next.js apps
-- **Netlify**: Supports Next.js with automatic builds
-- **Railway/Render/Fly.io**: General-purpose hosting platforms
-- **Docker**: Can be containerized for self-hosting
+Set these environment variables in the hosting platform:
 
-Make sure to set the `TURSO_DB_URL` and `TURSO_AUTH_TOKEN` environment variables in your deployment platform.
-
-## Data Collection
-
-This dashboard requires a separate data collection process. Here's what you need:
-
-1. A script that periodically fetches data from Northeastern Recreation's facility counts page
-2. Parsing logic to extract location IDs, names, and current counts
-3. A scheduler (cron job, cloud function, etc.) to run the script at regular intervals
-4. Insert logic to store the data in your Turso database using the schema above
-
-**Example data collection flow:**
-```
-Cron Job (every 5 min) → Scraper → Parse HTML → Insert to Turso → Dashboard displays
+```env
+TURSO_DB_URL=...
+TURSO_AUTH_TOKEN=...
 ```
 
-## Adapting for Other Facilities
+The route uses `revalidate = 300`, so production hosts should cache generated HTML while refreshing in the background.
 
-Want to use this for your own gym or facility? Here's what to modify:
+## Troubleshooting
 
-1. **Update the title and branding**:
-   - Edit `components/dashboard/header.tsx` to change the header title and data source link
-   - Update `app/layout.tsx` metadata (title, description)
+### Database Not Configured
 
-2. **Modify the data source**:
-   - Build your own scraper for your facility's website
-   - Adjust the database schema if needed (e.g., add capacity limits, facility types)
-   - Update `lib/academic-calendar.ts` with your institution's semester dates and closures
+- Confirm `.env.local` exists.
+- Confirm `TURSO_DB_URL` and `TURSO_AUTH_TOKEN` are not placeholder values.
+- Restart `npm run dev` after changing env vars.
 
-3. **Customize the UI**:
-   - Chart colors: `components/dashboard/zone-area-chart.tsx` (search for `NORTHEASTERN_RED`)
-   - Layout: Modify the grids in `components/dashboard/*-section.tsx`
-   - Theme colors: `app/globals.css` CSS variables
+### Empty Charts
 
-## Learn More
+- Verify `locations` contains zones.
+- Verify `location_counts` contains rows for recent `last_updated_at` dates.
+- Check that timestamps match the expected formats above.
 
+### Odd Date Or Hour Buckets
+
+- Do not parse `last_updated_at` with JavaScript `Date`.
+- Use SQL bucketing on the literal string or helpers in `lib/time.ts`.
+- Remember that `fetched_at` is UTC and is safe to parse as a real instant.
+
+## Resources
+
+- [Northeastern Recreation Live Facility Counts](https://recreation.northeastern.edu/live-facility-counts/)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com)
 - [Turso Documentation](https://docs.turso.tech)
 - [Recharts Documentation](https://recharts.org)
-
-## License
-
-MIT License - feel free to use this project for your own facility tracking needs.
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
