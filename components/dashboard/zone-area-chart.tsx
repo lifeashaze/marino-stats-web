@@ -106,32 +106,36 @@ export function ZoneAreaChart({
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
       <div className="flex items-start justify-between mb-4">
-        <div className="flex min-w-0 flex-1 items-start gap-2 pr-2">
-          <button
-            type="button"
-            onClick={onToggleFavorite}
-            aria-label={`${isFavorite ? "Remove" : "Add"} ${zone.locationName} ${
-              isFavorite ? "from" : "to"
-            } favorites`}
-            aria-pressed={isFavorite}
-            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            className={`mt-0.5 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-colors ${
-              isFavorite
-                ? "border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400 dark:hover:bg-amber-950"
-                : "border-neutral-200 text-neutral-400 hover:border-amber-300 hover:text-amber-600 dark:border-neutral-700 dark:text-neutral-500 dark:hover:border-amber-700 dark:hover:text-amber-400"
-            }`}
-          >
-            <Star className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
-          </button>
-          <div className="min-w-0">
-            <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
-              {zone.locationName}
-            </h3>
-            {zone.totalCapacity && (
-              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+        <div className="min-w-0 flex-1 pr-2">
+          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100 break-words">
+            {zone.locationName}
+          </h3>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {zone.totalCapacity ? (
+              <div className="text-xs text-neutral-500 dark:text-neutral-400">
                 Capacity: {zone.totalCapacity}
               </div>
-            )}
+            ) : null}
+            {zone.totalCapacity ? (
+              <span className="text-neutral-300 dark:text-neutral-700">·</span>
+            ) : null}
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              aria-label={`${isFavorite ? "Remove" : "Add"} ${zone.locationName} ${
+                isFavorite ? "from" : "to"
+              } favorites`}
+              aria-pressed={isFavorite}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              className={`inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                isFavorite
+                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-amber-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-amber-300"
+              }`}
+            >
+              <Star className="h-3 w-3" fill={isFavorite ? "currentColor" : "none"} />
+              {isFavorite ? "Favorited" : "Favorite"}
+            </button>
           </div>
         </div>
         {showLastCount && (
