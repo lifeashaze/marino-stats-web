@@ -115,7 +115,7 @@ export function ZoneChartsSection({
         <div>
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              Favourites
+              Pinned zones
             </h2>
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
             <span className="text-sm text-neutral-500 dark:text-neutral-400">

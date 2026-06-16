@@ -72,8 +72,8 @@ function FavoriteBadge({ isFavorite }: { isFavorite: boolean }) {
   if (!isFavorite) return null;
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-      <Star className="h-3 w-3" fill="currentColor" />
-      Favorite
+      <Pin className="h-3 w-3" fill="currentColor" />
+      Pinned
     </span>
   );
 }
@@ -138,7 +138,7 @@ function CornerActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantPr
   return (
     <VariantPanel
       title="Option A: quiet corner action"
-      thesis="Keep favorites as a small secondary action in the top-right corner, away from the chart title."
+      thesis="Keep pins as a small secondary action in the top-right corner, away from the chart title."
     >
       {zones.slice(0, 2).map((zone) => {
         const isFavorite = favoriteIds.has(zone.id);
@@ -174,7 +174,7 @@ function CornerActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantPr
 function TextActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantProps) {
   return (
     <VariantPanel
-      title="Option B: Favourite action under metadata"
+      title="Option B: Pin action under metadata"
       thesis="Make the action explicit and low-pressure: users read capacity, then decide whether to save it."
     >
       {zones.slice(0, 2).map((zone) => {
@@ -199,7 +199,7 @@ function TextActionVariant({ zones, favoriteIds, onToggleFavorite }: VariantProp
                 ) : (
                   <Star className="h-3.5 w-3.5" />
                 )}
-                {isFavorite ? "Favourited" : "Favourite"}
+                {isFavorite ? "Pinned" : "Pin"}
               </button>
             </div>
           </ZoneCardShell>
@@ -213,7 +213,7 @@ function SelectionModeVariant({ zones, favoriteIds, onToggleFavorite }: VariantP
   return (
     <VariantPanel
       title="Option C: manage mode"
-      thesis="Separate normal chart browsing from editing favorites. This is calmer, but adds one extra step."
+      thesis="Separate normal chart browsing from editing pins. This is calmer, but adds one extra step."
     >
       {zones.slice(0, 2).map((zone) => {
         const isFavorite = favoriteIds.has(zone.id);
@@ -234,7 +234,7 @@ function SelectionModeVariant({ zones, favoriteIds, onToggleFavorite }: VariantP
                   {zone.name}
                 </h3>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Click card to toggle favorite
+                  Click card to toggle pin
                 </p>
               </div>
               <span
@@ -261,10 +261,10 @@ function ChipRailVariant({ zones, favoriteIds, onToggleFavorite }: VariantProps)
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
-            Option D: favorite rail
+            Option D: pin rail
           </h2>
           <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Leave chart cards alone. Users manage favorites from compact zone chips above the charts.
+            Leave chart cards alone. Users manage pins from compact zone chips above the charts.
           </p>
         </div>
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -332,17 +332,17 @@ export default function IdeationPage() {
             Back to dashboard
           </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-            Favorite Zones Interaction Ideation
+            Pinned Zones Interaction Ideation
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-neutral-600 dark:text-neutral-400">
-            This page is a sandbox for comparing favorite-zone UI patterns. It uses mock data and
+            This page is a sandbox for comparing pinned-zone UI patterns. It uses mock data and
             temporary local page state only.
           </p>
         </div>
 
         <section className="mb-8 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Current favorites preview
+            Current pins preview
           </h2>
           {favoriteZones.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -358,7 +358,7 @@ export default function IdeationPage() {
             </div>
           ) : (
             <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
-              No favorites selected. This mirrors the dashboard behavior where the Favorites
+              No pins selected. This mirrors the dashboard behavior where the Pinned zones
               section stays hidden until something is saved.
             </p>
           )}

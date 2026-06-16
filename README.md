@@ -19,7 +19,7 @@ Built to track and display historical occupancy trends across multiple recreatio
 - 🔮 **Rest-of-today forecast**: Dashed projection of how each zone will fill up, based on day-of-week patterns scaled by how today is tracking
 - 📊 **Interactive Area Charts**: Facility occupancy over time with gradient-filled area charts
 - 📅 **Date-Based Filtering**: View charts for the most recent week plus today
-- ⭐ **Local Favorites**: Pin frequently visited zones to the top of the chart list; preferences stay in the browser
+- 📌 **Local Pins**: Pin frequently visited zones to the top of the chart list; preferences stay in the browser
 - 🗓️ **Weekday analytics**: Heatmap rows use one latest completed date per weekday; semester-vs-semester comparison charts; academic-calendar closure handling
 - 🏢 **Multi-Facility Support**: Organized by facility with all zones displayed per facility
 - 🌓 **Dark Mode**: Toggle between light and dark themes

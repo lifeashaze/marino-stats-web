@@ -10,7 +10,7 @@ import {
   Tooltip,
   type TooltipProps,
 } from "recharts";
-import { Check, Star } from "lucide-react";
+import { Pin } from "lucide-react";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import {
   ChartTooltip,
@@ -116,27 +116,23 @@ export function ZoneAreaChart({
                 Capacity: {zone.totalCapacity}
               </div>
             ) : null}
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-100 pt-3 dark:border-neutral-800">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Keep this zone near the top.
-            </p>
+            {zone.totalCapacity ? (
+              <span className="text-neutral-300 dark:text-neutral-700">·</span>
+            ) : null}
             <button
               type="button"
               onClick={onToggleFavorite}
-              aria-label={`${isFavorite ? "Remove" : "Add"} ${zone.locationName} ${
-                isFavorite ? "from" : "to"
-              } favourites`}
+              aria-label={`${isFavorite ? "Unpin" : "Pin"} ${zone.locationName}`}
               aria-pressed={isFavorite}
-              title={isFavorite ? "Remove from favourites" : "Add to favourites"}
-              className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              title={isFavorite ? "Unpin zone" : "Pin zone"}
+              className={`inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
                 isFavorite
                   ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
-                  : "bg-neutral-100 text-neutral-700 hover:bg-amber-100 hover:text-amber-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-amber-500/15 dark:hover:text-amber-300"
-              }`}
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-amber-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-amber-300"
+                }`}
             >
-              {isFavorite ? <Check className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}
-              {isFavorite ? "Favourited" : "Favourite"}
+              <Pin className="h-3 w-3" fill={isFavorite ? "currentColor" : "none"} />
+              {isFavorite ? "Pinned" : "Pin"}
             </button>
           </div>
         </div>
