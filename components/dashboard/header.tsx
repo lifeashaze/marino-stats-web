@@ -27,7 +27,7 @@ export function Header() {
           <h1 className="text-sm sm:text-3xl font-semibold leading-tight tracking-tight whitespace-nowrap text-neutral-900 dark:text-neutral-100">
             Northeastern Recreation Capacity Analytics
           </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-2">
             <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
               Data source:{" "}
               <a
@@ -42,9 +42,9 @@ export function Header() {
             <button
               type="button"
               onClick={() => setShowFeatures(true)}
-              className="cursor-pointer text-xs font-medium text-amber-700 underline underline-offset-4 transition-colors hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 sm:text-sm"
+              className="mt-1 block cursor-pointer text-left text-xs font-medium text-amber-700 underline underline-offset-4 transition-colors hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 sm:text-sm"
             >
-              what&apos;s new?
+              What&apos;s new?
             </button>
           </div>
         </div>
