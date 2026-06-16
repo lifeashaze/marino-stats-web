@@ -47,15 +47,14 @@ export function Header({ semesterLabel, weekNumber }: HeaderProps) {
                 Live Facility Counts
               </a>
             </p>
-            <button
-              type="button"
-              onClick={() => setShowFeatures(true)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-amber-100/80 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-300/60 transition-colors hover:bg-amber-200/80 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/40 dark:hover:bg-amber-500/25 sm:text-xs"
-            >
-              <Sparkles className="h-3 w-3" />
-              New features
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowFeatures(true)}
+            className="mt-2 cursor-pointer text-left text-xs font-medium text-amber-700 underline-offset-4 hover:underline dark:text-amber-400 sm:text-sm"
+          >
+            what&apos;s new?
+          </button>
         </div>
         <div className="shrink-0 pt-0.5">
           <ThemeToggle />
