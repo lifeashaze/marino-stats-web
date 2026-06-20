@@ -53,7 +53,7 @@ const COUNT_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 
 // Gauge by fetched_at, not last_updated_at: an old last_updated_at just means the
 // count is unchanged, while healthy open-hours fetch silence tops out near 50 min
 // (see CLAUDE.md). Past this the count is a stale snapshot, not "right now".
-const STALE_AFTER_MINUTES = 60;
+const STALE_AFTER_MINUTES = 120;
 
 // Pairs with the "Last seen" header: "9:30 PM" / "9:30 PM yesterday" /
 // "9:30 PM · Thu, Jun 18" — friendly recency, no alarm-y "stale" wording.
