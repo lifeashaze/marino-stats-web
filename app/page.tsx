@@ -1,9 +1,12 @@
 import { getDashboardData } from "@/lib/queries";
 import { Dashboard } from "@/components/dashboard";
+import { DeferredDashboard } from "@/components/deferred-dashboard";
 
 // ISR: scraper writes every ~10 min; 60s cache keeps normal refreshes and
 // router.refresh() near-live without hammering Turso on every request.
 export const revalidate = 60;
+
+const BUILD_PHASE = "phase-production-build";
 
 function SetupNotice() {
   return (
@@ -22,7 +25,21 @@ function SetupNotice() {
 }
 
 export default async function Page() {
-  const data = await getDashboardData();
+  let data: Awaited<ReturnType<typeof getDashboardData>>;
+  let buildDeferred = false;
+
+  try {
+    data = await getDashboardData();
+  } catch {
+    if (process.env.NEXT_PHASE === BUILD_PHASE) {
+      buildDeferred = true;
+      data = null;
+    } else {
+      throw new Error("Failed to load dashboard data");
+    }
+  }
+
+  if (buildDeferred) return <DeferredDashboard />;
   if (!data) return <SetupNotice />;
   return <Dashboard data={data} />;
 }

@@ -140,22 +140,45 @@ const LATEST_SQL = `
    AND latest.max_fetched = lc.fetched_at
 `;
 
+const BATCH_ATTEMPTS = 3;
+const BATCH_BASE_DELAY_MS = 500;
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < BATCH_ATTEMPTS; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < BATCH_ATTEMPTS - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, BATCH_BASE_DELAY_MS * 2 ** attempt)
+        );
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function getDashboardData(): Promise<DashboardData | null> {
   if (!db) return null;
 
+  const client = db;
   const serverNow = nowET();
   const today = todayET();
   const semester = currentSemester();
 
-  const [zonesRes, readingsRes, baselinesRes, ...rest] = await db.batch(
-    [
-      ZONES_SQL,
-      RECENT_READINGS_SQL,
-      baselineStatement(semester.start, semester.end, today),
-      ...SEMESTERS.map((s) => semesterHourlyStatement(s.start, s.end, today)),
-      LATEST_SQL,
-    ],
-    "read"
+  const [zonesRes, readingsRes, baselinesRes, ...rest] = await withRetry(() =>
+    client.batch(
+      [
+        ZONES_SQL,
+        RECENT_READINGS_SQL,
+        baselineStatement(semester.start, semester.end, today),
+        ...SEMESTERS.map((s) => semesterHourlyStatement(s.start, s.end, today)),
+        LATEST_SQL,
+      ],
+      "read"
+    )
   );
   const semesterResults = rest.slice(0, SEMESTERS.length);
   const latestRes = rest[SEMESTERS.length];
