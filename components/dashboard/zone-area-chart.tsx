@@ -55,13 +55,14 @@ const COUNT_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 
 // (see CLAUDE.md). Past this the count is a stale snapshot, not "right now".
 const STALE_AFTER_MINUTES = 60;
 
-/** "as of 9:30 PM" / "… yesterday" / "… Thu, Jun 18" for a stale snapshot. */
+// Pairs with the "Last seen" header: "9:30 PM" / "9:30 PM yesterday" /
+// "9:30 PM · Thu, Jun 18" — friendly recency, no alarm-y "stale" wording.
 function staleLabel(recordedAt: string, now: ETParts): string {
   const time = formatTimeLabel(recordedAt);
   const dayDiff = daysBetween(recordedAt.slice(0, 10), now.dateStr);
-  if (dayDiff <= 0) return `as of ${time}`;
-  if (dayDiff === 1) return `as of ${time} yesterday`;
-  return `as of ${time}, ${formatDateLabel(recordedAt.slice(0, 10))}`;
+  if (dayDiff <= 0) return time;
+  if (dayDiff === 1) return `${time} yesterday`;
+  return `${time} · ${formatDateLabel(recordedAt.slice(0, 10))}`;
 }
 
 type ZoneAreaTooltipProps = {
@@ -164,7 +165,7 @@ export function ZoneAreaChart({
         {showLastCount && (
           <div className="text-right ml-4">
             <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
-              {isStale ? "Last Seen" : "Last Count"}
+              {isStale ? "Last seen" : "Last Count"}
             </div>
             <div className="flex items-center justify-end gap-2">
               <div
@@ -180,15 +181,9 @@ export function ZoneAreaChart({
                 <CircularProgress value={latest.count} max={zone.totalCapacity} muted={isStale} />
               )}
             </div>
-            <div
-              className={
-                isStale
-                  ? "text-xs text-amber-600 dark:text-amber-500 mt-1"
-                  : "text-xs text-neutral-500 dark:text-neutral-400 mt-1"
-              }
-            >
+            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
               {isStale
-                ? `Stale · ${staleLabel(latest.recordedAt, now)}`
+                ? staleLabel(latest.recordedAt, now)
                 : formatTimeLabel(latest.recordedAt)}
             </div>
           </div>
