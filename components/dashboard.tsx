@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { SEMESTERS } from "@/lib/academic-calendar";
 import { nowET, type ETParts } from "@/lib/time";
 import type { DashboardData, LatestReading, Reading } from "@/lib/queries";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { Header } from "@/components/dashboard/header";
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { ZoneChartsSection } from "@/components/dashboard/zone-charts-section";
@@ -23,6 +24,8 @@ type DashboardProps = {
 const FAVORITE_ZONES_STORAGE_KEY = "marino-stats:favorite-zones:v1";
 
 export function Dashboard({ data }: DashboardProps) {
+  useAutoRefresh();
+
   const [selectedDate, setSelectedDate] = useState<string>(
     () => data.recentDates[0] ?? data.todayET
   );

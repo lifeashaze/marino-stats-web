@@ -1,9 +1,9 @@
 import { getDashboardData } from "@/lib/queries";
 import { Dashboard } from "@/components/dashboard";
 
-// ISR: the scraper writes every ~10 min, so a 5-min page cache is always fresh
-// enough; revalidation happens in the background and visitors get cached HTML.
-export const revalidate = 300;
+// ISR: scraper writes every ~10 min; 60s cache keeps normal refreshes and
+// router.refresh() near-live without hammering Turso on every request.
+export const revalidate = 60;
 
 function SetupNotice() {
   return (
