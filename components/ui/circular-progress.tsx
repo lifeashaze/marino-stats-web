@@ -7,6 +7,8 @@ interface CircularProgressProps {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  /** Render the progress arc in a neutral gray (e.g. for stale readings). */
+  muted?: boolean;
 }
 
 export function CircularProgress({
@@ -15,6 +17,7 @@ export function CircularProgress({
   size = 24,
   strokeWidth = 3,
   className,
+  muted = false,
 }: CircularProgressProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
   const radius = (size - strokeWidth) / 2;
@@ -23,6 +26,7 @@ export function CircularProgress({
 
   // Color based on utilization
   const getColor = () => {
+    if (muted) return "rgb(163, 163, 163)"; // neutral-400 — stale/unreliable
     if (percentage < 40) return "rgb(34, 197, 94)"; // green
     if (percentage < 70) return "rgb(234, 179, 8)"; // yellow
     return "#C8102E"; // Northeastern red

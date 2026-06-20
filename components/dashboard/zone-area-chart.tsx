@@ -17,7 +17,14 @@ import {
   CHART_TOOLTIP_CURSOR,
   CHART_TOOLTIP_WRAPPER_STYLE,
 } from "@/components/dashboard/chart-tooltip";
-import { formatHourLabel, formatTimeLabel } from "@/lib/time";
+import {
+  daysBetween,
+  formatDateLabel,
+  formatHourLabel,
+  formatTimeLabel,
+  minutesSinceUTC,
+  type ETParts,
+} from "@/lib/time";
 import type { LatestReading, Zone } from "@/lib/queries";
 
 export type ChartPoint = {
@@ -33,6 +40,7 @@ type ZoneAreaChartProps = {
   points: ChartPoint[];
   isToday: boolean;
   latest?: LatestReading;
+  now: ETParts;
   closedReason?: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
@@ -40,6 +48,21 @@ type ZoneAreaChartProps = {
 
 const NORTHEASTERN_RED = "#C8102E";
 const COUNT_FORMATTER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+
+// A reading is "live" only while the scraper is still actively seeing the zone.
+// Gauge by fetched_at, not last_updated_at: an old last_updated_at just means the
+// count is unchanged, while healthy open-hours fetch silence tops out near 50 min
+// (see CLAUDE.md). Past this the count is a stale snapshot, not "right now".
+const STALE_AFTER_MINUTES = 60;
+
+/** "as of 9:30 PM" / "… yesterday" / "… Thu, Jun 18" for a stale snapshot. */
+function staleLabel(recordedAt: string, now: ETParts): string {
+  const time = formatTimeLabel(recordedAt);
+  const dayDiff = daysBetween(recordedAt.slice(0, 10), now.dateStr);
+  if (dayDiff <= 0) return `as of ${time}`;
+  if (dayDiff === 1) return `as of ${time} yesterday`;
+  return `as of ${time}, ${formatDateLabel(recordedAt.slice(0, 10))}`;
+}
 
 type ZoneAreaTooltipProps = {
   active?: boolean;
@@ -74,6 +97,7 @@ export function ZoneAreaChart({
   points,
   isToday,
   latest,
+  now,
   closedReason,
   isFavorite,
   onToggleFavorite,
@@ -102,6 +126,7 @@ export function ZoneAreaChart({
   for (let h = firstHour; h <= lastHour; h += 3) xTicks.push(h);
 
   const showLastCount = isToday && latest;
+  const isStale = showLastCount && minutesSinceUTC(latest.fetchedAt, now) > STALE_AFTER_MINUTES;
 
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-[#C8102E]/40 dark:hover:border-[#ff4f68]/60 transition-colors">
@@ -139,18 +164,32 @@ export function ZoneAreaChart({
         {showLastCount && (
           <div className="text-right ml-4">
             <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
-              Last Count
+              {isStale ? "Last Seen" : "Last Count"}
             </div>
             <div className="flex items-center justify-end gap-2">
-              <div className="text-3xl font-bold text-[#C8102E] dark:text-[#ff4f68]">
+              <div
+                className={
+                  isStale
+                    ? "text-3xl font-bold text-neutral-400 dark:text-neutral-600"
+                    : "text-3xl font-bold text-[#C8102E] dark:text-[#ff4f68]"
+                }
+              >
                 {latest.count}
               </div>
               {zone.totalCapacity && (
-                <CircularProgress value={latest.count} max={zone.totalCapacity} />
+                <CircularProgress value={latest.count} max={zone.totalCapacity} muted={isStale} />
               )}
             </div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              {formatTimeLabel(latest.recordedAt)}
+            <div
+              className={
+                isStale
+                  ? "text-xs text-amber-600 dark:text-amber-500 mt-1"
+                  : "text-xs text-neutral-500 dark:text-neutral-400 mt-1"
+              }
+            >
+              {isStale
+                ? `Stale · ${staleLabel(latest.recordedAt, now)}`
+                : formatTimeLabel(latest.recordedAt)}
             </div>
           </div>
         )}

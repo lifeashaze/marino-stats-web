@@ -77,6 +77,7 @@ function ZoneChart({
       points={points}
       isToday={isToday}
       latest={latestByZone.get(zone.locationId)}
+      now={now}
       closedReason={points.length === 0 ? isClosed(zone.facilityName, selectedDate) : null}
       isFavorite={favoriteZoneIds.has(zone.locationId)}
       onToggleFavorite={() => onToggleFavorite(zone.locationId)}

@@ -120,6 +120,15 @@ export function utcToComparableMs(utcIso: string): number {
   return comparableMsOf(toETParts(new Date(utcIso)));
 }
 
+/**
+ * Minutes elapsed from a TRUE-UTC instant (e.g. `fetched_at`) to `now`. This is
+ * the pipeline-liveness signal: an old `last_updated_at` only means the count is
+ * unchanged, but an old `fetched_at` means the scraper hasn't seen this zone.
+ */
+export function minutesSinceUTC(utcIso: string, now: ETParts): number {
+  return (comparableMsOf(now) - utcToComparableMs(utcIso)) / 60_000;
+}
+
 /** Hour of day with minute fraction (16:30 → 16.5) from a naive ET string. */
 export function etHourFraction(naive: string): number {
   return Number(naive.slice(11, 13)) + Number(naive.slice(14, 16)) / 60;
