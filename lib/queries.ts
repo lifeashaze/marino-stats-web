@@ -6,6 +6,7 @@
  * (see lib/time.ts) — date()/strftime() on them yield correct ET values.
  */
 
+import { unstable_cache } from "next/cache";
 import type { InStatement } from "@libsql/client";
 import { db } from "@/lib/db";
 import { currentSemester, globalClosureDates, SEMESTERS } from "@/lib/academic-calendar";
@@ -160,7 +161,7 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
-export async function getDashboardData(): Promise<DashboardData | null> {
+async function fetchDashboardData(): Promise<DashboardData | null> {
   if (!db) return null;
 
   const client = db;
@@ -236,4 +237,15 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     semesterHourly,
     latest,
   };
+}
+
+// The route is force-dynamic (no build-time prerender, so Turso flakes can
+// never fail the build or poison a cached page). This data cache keeps Turso
+// from being hit more than once per minute across requests/regions.
+const getCachedDashboardData = unstable_cache(fetchDashboardData, ["dashboard-data-v1"], {
+  revalidate: 60,
+});
+
+export async function getDashboardData(): Promise<DashboardData | null> {
+  return getCachedDashboardData();
 }
