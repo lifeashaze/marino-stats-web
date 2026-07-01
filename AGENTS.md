@@ -29,13 +29,13 @@ There is no test suite. Spot-check data-layer changes with throwaway scripts: `n
 
 ### Data flow
 
-1. `app/page.tsx` is a server component with **ISR (`revalidate = 300`)** — the scraper polls every ~10 min, so 5-min cached HTML is always fresh enough. It calls `getDashboardData()` and renders a `SetupNotice` if the db env is missing (`db` from `lib/db.ts` is **null** when `TURSO_DB_URL`/`TURSO_AUTH_TOKEN` are unset, so builds succeed without credentials).
+1. `app/page.tsx` is a **`force-dynamic`** server component (no build-time prerender, so Turso flakes can never fail the build). Freshness/load is handled by the **60-second `unstable_cache`** around `getDashboardData()` in `lib/queries.ts` plus the client's `useAutoRefresh()` (router.refresh on focus / every 90 s while visible). It renders a `SetupNotice` if the db env is missing (`db` from `lib/db.ts` is **null** when `TURSO_DB_URL`/`TURSO_AUTH_TOKEN` are unset, so builds succeed without credentials).
 2. `lib/queries.ts` builds the payload in **one `db.batch(..., "read")` roundtrip**: zones, last-8-days readings, current-semester hourly baselines for forecasts, per-semester hour-of-day averages, and latest reading per zone.
 3. `components/dashboard.tsx` (`"use client"`) is a thin orchestrator: state (`selectedDate`, heatmap/comparison zone ids, a 60-second `now` ticker seeded from `data.serverNow` for hydration safety) plus `useMemo` lookups, feeding the section components in `components/dashboard/`.
 
 ### Page sections (top to bottom)
 
-- `header.tsx` — title + semester badge ("Summer 2026 · Week 6").
+- `header.tsx` — title, data-source link, "What's new" dialog, theme toggle.
 - `date-selector.tsx` + `zone-charts-section.tsx`/`zone-area-chart.tsx` — per-zone area charts on a numeric ET-hour X axis; today's chart appends a dashed rest-of-day forecast (`lib/forecast.ts`: day-of-week baseline × clamped today-so-far trend factor).
 - `heatmap-section.tsx` — day×hour grid where each weekday row comes from one latest completed date, preventing missing slots from falling back to older weeks; weekend closures render striped "Closed" cells.
 - `semester-comparison-section.tsx` — avg occupancy by hour, one line per semester with data; future semesters appear automatically.
@@ -54,13 +54,15 @@ location_counts (location_id, last_count, last_updated_at, fetched_at, PK(locati
 ```
 The PK allows duplicate `(location_id, last_updated_at)` pairs from re-fetches — aggregation queries dedupe with `GROUP BY ... MAX(last_count)`. No API routes exist; the page is the only consumer.
 
+An expression index `idx_location_counts_date ON location_counts(date(last_updated_at))` exists (created 2026-07-01). SQLite only uses it when the query text matches the expression **exactly** — always filter/bucket with `date(last_updated_at)`, never a rephrasing like `substr(last_updated_at, 1, 10)`.
+
 ### Environment
 
 `.env.local` (see `.env.example`): `TURSO_DB_URL`, `TURSO_AUTH_TOKEN`. Pull from Vercel with `vercel env pull .env.local`.
 
 ### UI & Styling
 
-- shadcn/ui components in `components/ui/` on Base UI primitives ("base-nova" style); variants via CVA; merge classes with `cn()` from `lib/utils.ts`.
+- `components/ui/` holds the one shadcn-style component in use (`circular-progress.tsx`); merge classes with `cn()` from `lib/utils.ts`. Add new shadcn components with `npx shadcn add` only when actually used.
 - Tailwind CSS 4, color variables in `app/globals.css` (`--chart-1..5` must stay defined in both `:root` and `.dark` — Recharts strokes reference them directly), dark mode via `.dark` class toggled by `components/theme-toggle.tsx`.
 - Visual language: amber accent (`rgb(217, 119, 6)`), neutral cards, chip-style radio groups (`zone-chip-group.tsx`); heatmap colors green <40% / yellow <70% / red ≥70%.
 - Path alias `@/*` maps to the repo root.
