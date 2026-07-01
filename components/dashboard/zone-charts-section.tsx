@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { isClosed } from "@/lib/academic-calendar";
 import { buildForecast } from "@/lib/forecast";
 import { etHourFraction, formatHourLabel, formatTimeLabel, type ETParts } from "@/lib/time";
@@ -19,11 +20,14 @@ type ZoneChartsSectionProps = {
   onToggleFavorite: (locationId: number) => void;
 };
 
-type ZoneChartProps = Omit<ZoneChartsSectionProps, "zoneGroups"> & {
+type ZoneChartProps = Omit<ZoneChartsSectionProps, "zoneGroups" | "now"> & {
   zone: Zone;
+  /** null for historical dates — those charts never read the clock, so the
+   * 60-second `now` tick doesn't defeat the memo below. */
+  now: ETParts | null;
 };
 
-function ZoneChart({
+const ZoneChart = memo(function ZoneChart({
   zone,
   readingsForDate,
   selectedDate,
@@ -42,7 +46,7 @@ function ZoneChart({
     label: formatTimeLabel(r.recordedAt),
   }));
 
-  if (isToday && points.length > 0) {
+  if (isToday && now && points.length > 0) {
     const dayBaselines = baselineLookup.get(zone.locationId)?.get(now.dayOfWeek);
     const baselineByHour = new Map<number, number>();
     for (const [hour, cell] of dayBaselines ?? []) baselineByHour.set(hour, cell.avg);
@@ -83,7 +87,7 @@ function ZoneChart({
       onToggleFavorite={() => onToggleFavorite(zone.locationId)}
     />
   );
-}
+});
 
 export function ZoneChartsSection({
   zoneGroups,
@@ -105,7 +109,7 @@ export function ZoneChartsSection({
     todayET,
     latestByZone,
     baselineLookup,
-    now,
+    now: selectedDate === todayET ? now : null,
     favoriteZoneIds,
     onToggleFavorite,
   };

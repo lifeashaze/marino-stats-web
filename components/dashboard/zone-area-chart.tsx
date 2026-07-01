@@ -40,7 +40,8 @@ type ZoneAreaChartProps = {
   points: ChartPoint[];
   isToday: boolean;
   latest?: LatestReading;
-  now: ETParts;
+  /** null for historical dates (see ZoneChart) — only read when isToday. */
+  now: ETParts | null;
   closedReason?: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
@@ -126,8 +127,10 @@ export function ZoneAreaChart({
   const xTicks: number[] = [];
   for (let h = firstHour; h <= lastHour; h += 3) xTicks.push(h);
 
-  const showLastCount = isToday && latest;
-  const isStale = showLastCount && minutesSinceUTC(latest.fetchedAt, now) > STALE_AFTER_MINUTES;
+  const showLastCount = isToday && latest && now;
+  const isStale = Boolean(
+    showLastCount && minutesSinceUTC(latest.fetchedAt, now) > STALE_AFTER_MINUTES
+  );
 
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-5 hover:border-[#C8102E]/40 dark:hover:border-[#ff4f68]/60 transition-colors">

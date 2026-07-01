@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, memo, useState } from "react";
 import { isClosedOnDayOfWeek, type Semester } from "@/lib/academic-calendar";
 import { ChartTooltip } from "@/components/dashboard/chart-tooltip";
 import { ZoneChipGroup } from "@/components/dashboard/zone-chip-group";
@@ -26,7 +26,8 @@ const SUNDAY_OPEN_HOUR = 12;
 
 type HoveredCell = { rowIdx: number; hour: number; x: number; y: number };
 
-export function HeatmapSection({
+// memo: none of these props change on the dashboard's 60-second clock tick.
+export const HeatmapSection = memo(function HeatmapSection({
   zoneGroups,
   selectedZoneId,
   onSelectZone,
@@ -235,4 +236,4 @@ export function HeatmapSection({
       </div>
     </div>
   );
-}
+});

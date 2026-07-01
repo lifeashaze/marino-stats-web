@@ -168,6 +168,9 @@ async function fetchDashboardData(): Promise<DashboardData | null> {
   const serverNow = nowET();
   const today = todayET();
   const semester = currentSemester();
+  // Semesters that haven't started can't have rows yet — querying them would
+  // full-scan location_counts just to return nothing.
+  const startedSemesters = SEMESTERS.filter((s) => s.start <= today);
 
   const [zonesRes, readingsRes, baselinesRes, ...rest] = await withRetry(() =>
     client.batch(
@@ -175,14 +178,14 @@ async function fetchDashboardData(): Promise<DashboardData | null> {
         ZONES_SQL,
         RECENT_READINGS_SQL,
         baselineStatement(semester.start, semester.end, today),
-        ...SEMESTERS.map((s) => semesterHourlyStatement(s.start, s.end, today)),
+        ...startedSemesters.map((s) => semesterHourlyStatement(s.start, s.end, today)),
         LATEST_SQL,
       ],
       "read"
     )
   );
-  const semesterResults = rest.slice(0, SEMESTERS.length);
-  const latestRes = rest[SEMESTERS.length];
+  const semesterResults = rest.slice(0, startedSemesters.length);
+  const latestRes = rest[startedSemesters.length];
 
   const zones: Zone[] = zonesRes.rows.map((r) => ({
     locationId: r.location_id as number,
@@ -211,7 +214,7 @@ async function fetchDashboardData(): Promise<DashboardData | null> {
 
   const semesterHourly: SemesterHourlyAvg[] = semesterResults.flatMap((res, i) =>
     res.rows.map((r) => ({
-      semesterId: SEMESTERS[i].id,
+      semesterId: startedSemesters[i].id,
       locationId: r.location_id as number,
       hour: r.hour as number,
       avgCount: r.avg_count as number,

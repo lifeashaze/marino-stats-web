@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   LineChart,
   Line,
@@ -78,7 +79,8 @@ function SemesterComparisonTooltip({
   );
 }
 
-export function SemesterComparisonSection({
+// memo: none of these props change on the dashboard's 60-second clock tick.
+export const SemesterComparisonSection = memo(function SemesterComparisonSection({
   zoneGroups,
   selectedZoneId,
   onSelectZone,
@@ -204,4 +206,4 @@ export function SemesterComparisonSection({
       </div>
     </div>
   );
-}
+});
