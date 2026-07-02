@@ -43,6 +43,36 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+@theme {
+  --animate-overlay-in: overlay-in 0.2s ease-out both;
+  --animate-overlay-out: overlay-out 0.16s ease-in both;
+  --animate-dialog-in: dialog-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-dialog-out: dialog-out 0.16s ease-in both;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes overlay-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+    }
+  }
+}
+
 :root {
   --background: 255 255 255;
   --foreground: 15 15 15;

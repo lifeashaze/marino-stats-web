@@ -1,0 +1,3 @@
+/** Shared style for pill-shaped link buttons (header links, changelog back link). */
+export const pillLinkClass =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-neutral-300/80 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition-all hover:border-neutral-400/80 hover:bg-neutral-50 hover:text-neutral-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8102E] active:scale-[0.97] dark:border-neutral-700/80 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 dark:focus-visible:outline-[#ff4f68]";
