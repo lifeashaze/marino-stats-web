@@ -1,25 +1,10 @@
-"use client";
-
-import { useEffect, useId, useState } from "react";
-import { Pin, Sparkles, TrendingUp, X } from "lucide-react";
+import Link from "next/link";
+import { History } from "lucide-react";
+import { HowItWorksDialog } from "@/components/dashboard/how-it-works-dialog";
+import { pillLinkClass } from "@/components/dashboard/pill-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
-  const [showFeatures, setShowFeatures] = useState(false);
-  const titleId = useId();
-  const descriptionId = useId();
-
-  useEffect(() => {
-    if (!showFeatures) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setShowFeatures(false);
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showFeatures]);
-
   return (
     <div className="mb-6">
       <div className="flex items-start justify-between gap-3">
@@ -39,120 +24,19 @@ export function Header() {
                 Live Facility Counts
               </a>
             </p>
-            <button
-              type="button"
-              onClick={() => setShowFeatures(true)}
-              className="mt-1 block cursor-pointer text-left text-xs font-medium text-[#C8102E] underline underline-offset-4 transition-colors hover:text-[#8f0b22] dark:text-[#ff8fa0] dark:hover:text-[#ffc9d2] sm:text-sm"
-            >
-              What&apos;s new?
-            </button>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <HowItWorksDialog />
+              <Link href="/changelog" className={pillLinkClass}>
+                <History className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+                Changelog
+              </Link>
+            </div>
           </div>
         </div>
         <div className="shrink-0 pt-0.5">
           <ThemeToggle />
         </div>
       </div>
-
-      {showFeatures ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShowFeatures(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            aria-describedby={descriptionId}
-            className="w-full max-w-lg overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950"
-          >
-            <div className="border-b border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-800 dark:bg-neutral-900/60">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[#C8102E] dark:text-[#ff8fa0]">
-                    New features
-                  </p>
-                  <h2
-                    id={titleId}
-                    className="mt-1 text-xl font-semibold text-neutral-950 dark:text-neutral-50"
-                  >
-                    What changed?
-                  </h2>
-                  <p
-                    id={descriptionId}
-                    className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-400"
-                  >
-                    A few updates are live to make the dashboard easier to scan and compare.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFeatures(false)}
-                  aria-label="Close new features"
-                  className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C8102E]/10 text-[#C8102E] dark:bg-[#ff4f68]/15 dark:text-[#ff8fa0]">
-                    <Pin className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-                      Pin zones
-                    </h3>
-                    <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                      Pin the zones you visit most so they appear in a dedicated Pinned zones
-                      section. Pins stay local to your browser.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-950 dark:bg-white/10 dark:text-white">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-                      Crowd forecast
-                    </h3>
-                    <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                      Today&apos;s zone charts now include a dashed rest-of-day forecast based on
-                      recent activity and day-of-week patterns.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C8A978]/20 text-[#7a5f35] dark:bg-[#C8A978]/20 dark:text-[#e2c997]">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-                      Semester comparison
-                    </h3>
-                    <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                      Compare hourly occupancy patterns across semesters for the selected zone.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFeatures(false)}
-                className="mt-5 w-full cursor-pointer rounded-lg bg-[#C8102E] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9f0d25] dark:bg-[#ff4f68] dark:text-white dark:hover:bg-[#ff8fa0]"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
